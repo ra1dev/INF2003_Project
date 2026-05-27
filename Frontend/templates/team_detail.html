@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="team-header">
+
+    <img src="{{ stats[0].team_logo }}"
+         class="team-header-logo">
+
+    <h1>{{ stats[0].team_name }} Statistics</h1>
+
+</div>
+<table>
+
+    <thead>
+        <tr>
+            <th>Season</th>
+            <th>Goals</th>
+            <th>Shots</th>
+            <th>Shots On Target</th>
+            <th>Corners</th>
+            <th>Fouls</th>
+            <th>Yellow Cards</th>
+            <th>Red Cards</th>
+            <th>Goal Conversion %</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for row in stats %}
+        <tr>
+
+            <td>{{ row.season_name }}</td>
+            <td>{{ row.goals }}</td>
+            <td>{{ row.shots }}</td>
+            <td>{{ row.shots_on_target }}</td>
+            <td>{{ row.corners }}</td>
+            <td>{{ row.fouls }}</td>
+            <td>{{ row.yellow_cards }}</td>
+            <td>{{ row.red_cards }}</td>
+            <td>{{ row.goal_conversion }}%</td>
+
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

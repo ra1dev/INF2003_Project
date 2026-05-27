@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if stats %}
+    <div class="player-header">
+        <img src="{{ stats[0].player_image }}"
+            class="player-image">
+
+        <h1>{{ stats[0].player_name }} Statistics</h1>
+    </div>
+    {% else %}
+    <h1>Player Statistics</h1>
+    {% endif %}
+<table>
+
+    <thead>
+        <tr>
+            <th>Season</th>
+            <th>Team</th>
+            <th>Appearances</th>
+            <th>Goals</th>
+            <th>Assists</th>
+            <th>Yellow Cards</th>
+            <th>Red Cards</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for row in stats %}
+        <tr>
+
+            <td>{{ row.season_name }}</td>
+            <td>{{ row.team_name }}</td>
+            <td>{{ row.appearances }}</td>
+            <td>{{ row.goals }}</td>
+            <td>{{ row.assists }}</td>
+            <td>{{ row.yellow_cards }}</td>
+            <td>{{ row.red_cards }}</td>
+
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

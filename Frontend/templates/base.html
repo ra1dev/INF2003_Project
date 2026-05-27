@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <h2>EPL Database System</h2>
+
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/tables">Tables</a>
+        <a href="/players">Players</a>
+        <a href="/teams">Teams</a>
+        <a href="/matches">Matches</a>
+        <a href="/predictions">Predictions</a>
+    </div>
+</nav>
+
+<div class="container">
+    {% block content %}
+    {% endblock %}
+</div>
+
+</body>
+</html>
