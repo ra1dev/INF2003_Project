@@ -2,18 +2,96 @@
 
 {% block content %}
 
-{% if stats %}
-    <div class="player-header">
-        <img src="{{ stats[0].player_image }}"
-            class="player-image">
+{% if player %}
 
-        <h1>{{ stats[0].player_name }} Statistics</h1>
+<div class="player-fm-layout">
+
+    <div class="player-left-panel">
+        <img src="{{ player.image_url }}"
+             class="player-profile-image"
+             alt="{{ player.player_name }}">
+
+        <h1>{{ player.player_name }}</h1>
+
+        <div class="player-team-row">
+            <img src="{{ player.team_logo }}" class="mini-logo">
+            <span>{{ player.team_name }}</span>
+        </div>
+
+        <p class="player-meta">Position: {{ player.position_name or "Unknown" }}</p>
+        <p class="player-meta">Player ID: {{ player.player_id }}</p>
+
+        <div class="position-card">
+            <h3>Position</h3>
+            <div class="mini-pitch">
+                <div class="pitch-box top-box"></div>
+                <div class="pitch-circle"></div>
+                <div class="pitch-box bottom-box"></div>
+
+                {% set pos = (player.position_name or '')|lower %}
+
+                {% if 'forward' in pos or 'striker' in pos or 'attacker' in pos or pos == 'fw' or pos == 'st' or pos == 'cf' %}
+                    <div class="pos-dot striker-dot"></div>
+
+                {% elif 'midfielder' in pos or 'midfield' in pos or pos == 'mf' or pos == 'cm' or pos == 'dm' or pos == 'am' %}
+                    <div class="pos-dot midfield-dot"></div>
+
+                {% elif 'defender' in pos or pos == 'df' or pos == 'cb' or pos == 'lb' or pos == 'rb' %}
+                    <div class="pos-dot defender-dot"></div>
+
+                {% elif 'goalkeeper' in pos or pos == 'gk' %}
+                    <div class="pos-dot keeper-dot"></div>
+
+                {% else %}
+                    <div class="pos-dot midfield-dot"></div>
+                {% endif %}
+            </div>
+            <p class="position-label">{{ player.position_name or "Unknown" }}</p>
+        </div>
     </div>
-    {% else %}
-    <h1>Player Statistics</h1>
-    {% endif %}
-<table>
 
+    <div class="player-right-panel">
+
+        <div class="stats-column">
+            <h3>Attacking</h3>
+            <div class="stat-row"><span>Appearances</span><strong>{{ player.total_appearances }}</strong></div>
+            <div class="stat-row"><span>Goals</span><strong>{{ player.total_goals }}</strong></div>
+            <div class="stat-row"><span>Assists</span><strong>{{ player.total_assists }}</strong></div>
+            <div class="stat-row"><span>Shots</span><strong>{{ player.total_shots }}</strong></div>
+            <div class="stat-row"><span>Shots On Target</span><strong>{{ player.total_shots_on_target }}</strong></div>
+        </div>
+
+        <div class="stats-column">
+            <h3>Creativity</h3>
+            <div class="stat-row"><span>Big Chances Created</span><strong>{{ player.total_big_chances_created }}</strong></div>
+            <div class="stat-row"><span>Passes</span><strong>{{ player.total_passes }}</strong></div>
+            <div class="stat-row"><span>Crosses</span><strong>{{ player.total_crosses }}</strong></div>
+            <div class="stat-row"><span>Through Balls</span><strong>{{ player.total_through_balls }}</strong></div>
+        </div>
+
+        <div class="stats-column">
+            <h3>Defending</h3>
+            <div class="stat-row"><span>Tackles</span><strong>{{ player.total_tackles }}</strong></div>
+            <div class="stat-row"><span>Interceptions</span><strong>{{ player.total_interceptions }}</strong></div>
+            <div class="stat-row"><span>Clearances</span><strong>{{ player.total_clearances }}</strong></div>
+            <div class="stat-row"><span>Blocked Shots</span><strong>{{ player.total_blocked_shots }}</strong></div>
+            <div class="stat-row"><span>Recoveries</span><strong>{{ player.total_recoveries }}</strong></div>
+        </div>
+
+        <div class="stats-column">
+            <h3>Duels / Discipline</h3>
+            <div class="stat-row"><span>Duels Won</span><strong>{{ player.total_duels_won }}</strong></div>
+            <div class="stat-row"><span>Aerial Battles Won</span><strong>{{ player.total_aerial_battles_won }}</strong></div>
+            <div class="stat-row"><span>Yellow Cards</span><strong>{{ player.total_yellow_cards }}</strong></div>
+            <div class="stat-row"><span>Red Cards</span><strong>{{ player.total_red_cards }}</strong></div>
+        </div>
+
+    </div>
+</div>
+
+<h2>Season Statistics</h2>
+
+<table>
     <thead>
         <tr>
             <th>Season</th>
@@ -25,25 +103,28 @@
             <th>Red Cards</th>
         </tr>
     </thead>
-
     <tbody>
-
         {% for row in stats %}
         <tr>
-
             <td>{{ row.season_name }}</td>
-            <td>{{ row.team_name }}</td>
+            <td>
+                <div class="match-team-cell">
+                    <img src="{{ row.team_logo }}" class="mini-logo">
+                    <span>{{ row.team_name }}</span>
+                </div>
+            </td>
             <td>{{ row.appearances }}</td>
             <td>{{ row.goals }}</td>
             <td>{{ row.assists }}</td>
             <td>{{ row.yellow_cards }}</td>
             <td>{{ row.red_cards }}</td>
-
         </tr>
         {% endfor %}
-
     </tbody>
-
 </table>
+
+{% else %}
+<h1>Player not found</h1>
+{% endif %}
 
 {% endblock %}
