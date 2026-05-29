@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Matches</h1>
+
+<form method="GET" class="filter-box">
+
+    <select name="season">
+        <option value="">All Seasons</option>
+
+        {% for season in seasons %}
+        <option value="{{ season.season_name }}"
+            {% if selected_season == season.season_name %}selected{% endif %}>
+            {{ season.season_name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <input type="text"
+           name="team"
+           placeholder="Search team"
+           value="{{ search_team or '' }}">
+    <input type="text"
+       name="opponent"
+       placeholder="Search opposing team"
+       value="{{ search_opponent or '' }}">
+    <button type="submit">Filter</button>
+
+    <a href="/matches" class="reset-btn">Reset</a>
+
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Season</th>
+            <th>Home Team</th>
+            <th>Score</th>
+            <th>Away Team</th>
+            <th>Result</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for match in matches %}
+
+        <tr class="clickable-row"
+    data-href="{{ url_for('match_detail', match_id=match.match_id) }}">
+
+            <td>{{ match.match_date }}</td>
+
+            <td>{{ match.season_name }}</td>
+
+            <td>
+
+                <div class="match-team-cell">
+
+                    <img src="{{ match.home_logo }}"
+                        class="mini-logo">
+
+                    <span>{{ match.home_team }}</span>
+
+                </div>
+
+            </td>
+
+            <td>
+                {{ match.full_time_home_goals }}
+                -
+                {{ match.full_time_away_goals }}
+            </td>
+
+            <td>
+
+                <div class="match-team-cell">
+
+                    <img src="{{ match.away_logo }}"
+                        class="mini-logo">
+
+                    <span>{{ match.away_team }}</span>
+
+                </div>
+
+            </td>
+
+            <td>{{ match.full_time_result }}</td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+</table>
+
+
+<script>
+    document.querySelectorAll(".clickable-row").forEach(row => {
+        row.addEventListener("click", () => {
+            window.location.href = row.dataset.href;
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>EPL Statistics Dashboard</h1>
+
+<div class="card-grid">
+
+    <a href="/players" class="card">
+        <h2>Players</h2>
+        <p>View all EPL players and season stats.</p>
+    </a>
+
+    <a href="/teams" class="card">
+        <h2>Teams</h2>
+        <p>View team statistics and performance.</p>
+    </a>
+
+    <a href="/matches" class="card">
+        <h2>Matches</h2>
+        <p>Browse EPL match records.</p>
+    </a>
+
+    <a href="/predictions" class="card">
+        <h2>Predictions</h2>
+        <p>View AI match predictions.</p>
+    </a>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Teams</h1>
+
+<form method="GET" class="filter-box">
+
+    <input type="text"
+           name="search"
+           placeholder="Search team"
+           value="{{ search or '' }}">
+
+    <button type="submit">Search</button>
+
+</form>
+
+<table>
+
+    <thead>
+        <tr>
+            <th>Team ID</th>
+            <th>Team Name</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for team in teams %}
+
+        <tr class="clickable-row"
+            data-href="{{ url_for('team_detail', team_id=team.team_id) }}">
+
+            <td>{{ team.team_id }}</td>
+
+            <td class="team-column">
+
+                <div class="team-cell">
+
+                    <img src="{{ team.team_logo }}"
+                        class="team-logo">
+
+                    <span>{{ team.team_name }}</span>
+
+                </div>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+<script>
+    document.querySelectorAll(".clickable-row").forEach(row => {
+        row.addEventListener("click", () => {
+            window.location.href = row.dataset.href;
+        });
+    });
+</script>
+{% endblock %}
