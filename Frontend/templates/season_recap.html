@@ -1,0 +1,615 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Season Recap</h1>
+
+<!-- Season selector -->
+<form method="GET" class="filter-box" style="margin-bottom: 24px;">
+    <label for="season" style="color:#94a3b8; font-size:0.9rem; margin-right:8px;">Season:</label>
+    <select name="season" id="season" onchange="this.form.submit()">
+        {% for s in seasons %}
+        <option value="{{ s.season_name }}" {% if selected_season==s.season_name %}selected{% endif %}>
+            {{ s.season_name }}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+
+    <div class="kpi-card kpi-gold">
+        <div class="kpi-label">Champion</div>
+        <div class="kpi-value kpi-value-sm">
+            {% if champion %}
+            <img src="{{ champion.team_logo }}" class="mini-logo" style="width:28px;height:28px;">
+            {{ champion.team_name }}
+            {% else %}N/A{% endif %}
+        </div>
+        <div class="kpi-sub">{{ champion.pts if champion else '–' }} pts</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Matches played</div>
+        <div class="kpi-value">{{ goal_kpis.total_matches if goal_kpis else '–' }}</div>
+        <div class="kpi-sub">This season</div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Total goals</div>
+        <div class="kpi-value">{{ goal_kpis.total_goals if goal_kpis else '–' }}</div>
+        <div class="kpi-sub">{{ goal_kpis.avg_goals if goal_kpis else '–' }} per match</div>
+    </div>
+
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Top scorer</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ top_scorer.player_name if top_scorer else 'N/A' }}
+        </div>
+        <div class="kpi-sub">
+            {% if top_scorer %}{{ top_scorer.goals }} goals · {{ top_scorer.team_name }}{% endif %}
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Most clean sheets</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ top_cs.player_name if top_cs else 'N/A' }}
+        </div>
+        <div class="kpi-sub">
+            {% if top_cs %}{{ top_cs.clean_sheets }} · {{ top_cs.team_name }}{% endif %}
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-red">
+        <div class="kpi-label">Total bookings</div>
+        <div class="kpi-value">
+            {% if card_kpis %}
+            {{ (card_kpis.total_yellow or 0) + (card_kpis.total_red or 0) }}
+            {% else %}–{% endif %}
+        </div>
+        <div class="kpi-sub">
+            {% if card_kpis %}
+            {{ card_kpis.total_yellow or 0 }} yellow · {{ card_kpis.total_red or 0 }} red
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- CHARTS ROW 1 -->
+<div class="recap-section-title">Team performance</div>
+
+<div class="recap-two-col">
+    <div class="card">
+        <div class="recap-panel-title">Goals scored by team</div>
+        <div class="recap-panel-sub">Top 10 teams by total goals this season</div>
+        <div class="recap-chart-wrap"><canvas id="goalsChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="recap-panel-title">Match outcomes</div>
+        <div class="recap-panel-sub">Home wins · draws · away wins split</div>
+        <div class="recap-chart-wrap"><canvas id="outcomeChart"></canvas></div>
+    </div>
+</div>
+
+<div class="recap-two-col">
+    <div class="card">
+        <div class="recap-panel-title">Discipline (top 8 clubs)</div>
+        <div class="recap-panel-sub">Yellow and red cards issued per team</div>
+        <div class="recap-chart-wrap"><canvas id="disciplineChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="recap-panel-title">Best defence</div>
+        <div class="recap-panel-sub">Fewest goals conceded (top 8 teams)</div>
+        <div class="recap-chart-wrap"><canvas id="defenceChart"></canvas></div>
+    </div>
+</div>
+
+<!-- LEAGUE TABLE -->
+<div class="recap-section-title">Final standings</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Pld</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+            <th>GF</th>
+            <th>GA</th>
+            <th>GD</th>
+            <th>Pts</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in standings %}
+        {% set pos = loop.index %}
+        <tr
+            class="{% if pos == 1 %}row-champion{% elif pos <= 4 %}row-cl{% elif pos >= standings|length - 2 %}row-rel{% endif %}">
+            <td style="color:#94a3b8; font-weight:700; text-align:center;">{{ pos }}</td>
+            <td>
+                <div class="match-team-cell">
+                    <img src="{{ team.team_logo }}" class="mini-logo">
+                    <span>{{ team.team_name }}</span>
+                </div>
+            </td>
+            <td style="text-align:center">{{ team.played }}</td>
+            <td style="text-align:center">{{ team.wins }}</td>
+            <td style="text-align:center">{{ team.draws }}</td>
+            <td style="text-align:center">{{ team.losses }}</td>
+            <td style="text-align:center">{{ team.gf }}</td>
+            <td style="text-align:center">{{ team.ga }}</td>
+            <td
+                style="text-align:center; color:{% if team.gd > 0 %}#22c55e{% elif team.gd < 0 %}#ef4444{% else %}#94a3b8{% endif %}">
+                {% if team.gd > 0 %}+{% endif %}{{ team.gd }}
+            </td>
+            <td style="text-align:center; color:#60a5fa; font-weight:800; font-size:1rem;">{{ team.pts }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="10" style="text-align:center;color:#64748b;padding:24px;">No standings data available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="zone-legend">
+    <span><span class="zone-dot" style="background:#f59e0b"></span> Champion</span>
+    <span><span class="zone-dot" style="background:#60a5fa"></span> Champions League (Top 4)</span>
+    <span><span class="zone-dot" style="background:#ef4444"></span> Relegated (Bottom 3)</span>
+</div>
+
+<!-- PLAYER LEADERS -->
+<div class="recap-section-title">Player leaders</div>
+
+<div class="card" style="margin-bottom: 30px;">
+    <div class="recap-panel-title">Statistical leaders</div>
+    <div class="recap-panel-sub">Top 8 per category from player_season_stats</div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="openTab(event,'tab-goals')">Goals</button>
+        <button class="tab-btn" onclick="openTab(event,'tab-assists')">Assists</button>
+        <button class="tab-btn" onclick="openTab(event,'tab-cs')">Clean sheets</button>
+        <button class="tab-btn" onclick="openTab(event,'tab-tackles')">Tackles</button>
+    </div>
+
+    <!-- Goals -->
+    <div id="tab-goals" class="tab-pane active">
+        {% set max_val = goals_leaders[0].val if goals_leaders else 1 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Club</th>
+                    <th>Goals</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in goals_leaders %}
+                <tr>
+                    <td
+                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td style="font-weight:600">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
+                                <div
+                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#2563eb;border-radius:999px">
+                                </div>
+                            </div>
+                            <span style="color:#60a5fa;font-weight:700;min-width:24px">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Assists -->
+    <div id="tab-assists" class="tab-pane">
+        {% set max_val = assists_leaders[0].val if assists_leaders else 1 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Club</th>
+                    <th>Assists</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in assists_leaders %}
+                <tr>
+                    <td
+                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td style="font-weight:600">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
+                                <div
+                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#f59e0b;border-radius:999px">
+                                </div>
+                            </div>
+                            <span style="color:#f59e0b;font-weight:700;min-width:24px">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Clean sheets -->
+    <div id="tab-cs" class="tab-pane">
+        {% set max_val = cs_leaders[0].val if cs_leaders else 1 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Club</th>
+                    <th>Clean sheets</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in cs_leaders %}
+                <tr>
+                    <td
+                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td style="font-weight:600">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
+                                <div
+                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#22c55e;border-radius:999px">
+                                </div>
+                            </div>
+                            <span style="color:#22c55e;font-weight:700;min-width:24px">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tackles -->
+    <div id="tab-tackles" class="tab-pane">
+        {% set max_val = tackles_leaders[0].val if tackles_leaders else 1 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Club</th>
+                    <th>Tackles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in tackles_leaders %}
+                <tr>
+                    <td
+                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td style="font-weight:600">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
+                                <div
+                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#14b8a6;border-radius:999px">
+                                </div>
+                            </div>
+                            <span style="color:#14b8a6;font-weight:700;min-width:24px">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CSS -->
+<style>
+    .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .kpi-card {
+        background: #1e293b;
+        border-radius: 14px;
+        padding: 20px 18px;
+        border-top: 3px solid #2563eb;
+    }
+
+    .kpi-card.kpi-gold {
+        border-top-color: #f59e0b;
+    }
+
+    .kpi-card.kpi-green {
+        border-top-color: #22c55e;
+    }
+
+    .kpi-card.kpi-teal {
+        border-top-color: #14b8a6;
+    }
+
+    .kpi-card.kpi-red {
+        border-top-color: #ef4444;
+    }
+
+    .kpi-label {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: 6px;
+    }
+
+    .kpi-value {
+        font-size: 1.7rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .kpi-value-sm {
+        font-size: 1rem;
+    }
+
+    .kpi-sub {
+        color: #64748b;
+        font-size: 0.78rem;
+        margin-top: 5px;
+    }
+
+    .recap-section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #60a5fa;
+        margin: 28px 0 14px;
+        border-left: 3px solid #2563eb;
+        padding-left: 12px;
+    }
+
+    .recap-panel-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .recap-panel-sub {
+        color: #64748b;
+        font-size: 0.78rem;
+        margin-bottom: 16px;
+    }
+
+    .recap-two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .recap-chart-wrap {
+        position: relative;
+        height: 280px;
+    }
+
+    .row-champion td {
+        border-left: 3px solid #f59e0b;
+    }
+
+    .row-cl td {
+        border-left: 3px solid #60a5fa;
+    }
+
+    .row-rel td {
+        border-left: 3px solid #ef4444;
+    }
+
+    .zone-legend {
+        display: flex;
+        gap: 20px;
+        margin: 12px 0 28px;
+        flex-wrap: wrap;
+        font-size: 0.78rem;
+        color: #94a3b8;
+    }
+
+    .zone-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    .tab-bar {
+        display: flex;
+        border-bottom: 2px solid #334155;
+        margin-bottom: 16px;
+    }
+
+    .tab-btn {
+        padding: 9px 18px;
+        border: none;
+        background: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 0.88rem;
+        font-weight: 600;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+        color: white;
+    }
+
+    .tab-btn.active {
+        color: #60a5fa;
+        border-bottom-color: #60a5fa;
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    @media (max-width:900px) {
+        .recap-two-col {
+            grid-template-columns: 1fr;
+        }
+
+        .kpi-strip {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .recap-chart-wrap {
+            height: 220px;
+        }
+    }
+</style>
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    /* jshint ignore:start */
+    /* eslint-disable */
+
+    var goalsLabels = {{ goals_by_team | map(attribute = 'team_name') | list | tojson }};
+    var goalsValues = {{ goals_by_team | map(attribute = 'goals_scored') | list | tojson }};
+    var outcomeHome = {{ (outcomes.home_wins or 0) if outcomes else 0 }};
+    var outcomeDraws = {{ (outcomes.draws     or 0) if outcomes else 0 }};
+    var outcomeAway = {{ (outcomes.away_wins or 0) if outcomes else 0 }};
+    var discLabels = {{ discipline | map(attribute = 'team_name') | list | tojson }};
+    var discYellow = {{ discipline | map(attribute = 'yellow_cards') | list | tojson }};
+    var discRed = {{ discipline | map(attribute = 'red_cards') | list | tojson }};
+    var defLabels = {{ standings[:8] | map(attribute = 'team_name') | list | tojson }};
+    var defValues = {{ standings[:8] | map(attribute = 'ga') | list | tojson }};
+
+    var LABEL_COLOR = "#94a3b8";
+    var GRID_COLOR = "#334155";
+
+    function axisOpts() {
+        return {
+            x: { ticks: { color: LABEL_COLOR, font: { family: "Arial", size: 11 } }, grid: { color: GRID_COLOR } },
+            y: { ticks: { color: LABEL_COLOR, font: { family: "Arial", size: 11 } }, grid: { color: GRID_COLOR } }
+        };
+    }
+
+    new Chart(document.getElementById("goalsChart"), {
+        type: "bar",
+        data: {
+            labels: goalsLabels,
+            datasets: [{ label: "Goals scored", data: goalsValues, backgroundColor: "#2563eb", borderRadius: 8 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
+            scales: axisOpts()
+        }
+    });
+
+    new Chart(document.getElementById("outcomeChart"), {
+        type: "doughnut",
+        data: {
+            labels: ["Home wins", "Draws", "Away wins"],
+            datasets: [{
+                data: [outcomeHome, outcomeDraws, outcomeAway],
+                backgroundColor: ["#22c55e", "#f59e0b", "#2563eb"], borderWidth: 0, hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom", labels: { color: LABEL_COLOR, font: { family: "Arial" }, padding: 14 } } }
+        }
+    });
+
+    new Chart(document.getElementById("disciplineChart"), {
+        type: "bar",
+        data: {
+            labels: discLabels,
+            datasets: [
+                { label: "Yellow cards", data: discYellow, backgroundColor: "#f59e0b", borderRadius: 6 },
+                { label: "Red cards", data: discRed, backgroundColor: "#ef4444", borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
+            scales: axisOpts()
+        }
+    });
+
+    var defPairs = defLabels.map(function (l, i) { return { label: l, val: defValues[i] }; });
+    defPairs.sort(function (a, b) { return a.val - b.val; });
+    new Chart(document.getElementById("defenceChart"), {
+        type: "bar",
+        data: {
+            labels: defPairs.map(function (d) { return d.label; }),
+            datasets: [{
+                label: "Goals conceded", data: defPairs.map(function (d) { return d.val; }),
+                backgroundColor: "#14b8a6", borderRadius: 6
+            }]
+        },
+        options: {
+            indexAxis: "y",
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
+            scales: axisOpts()
+        }
+    });
+
+    function openTab(e, id) {
+        document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+        document.querySelectorAll(".tab-pane").forEach(function (p) { p.classList.remove("active"); });
+        e.target.classList.add("active");
+        document.getElementById(id).classList.add("active");
+    }
+</script>
+
+{% endblock %}

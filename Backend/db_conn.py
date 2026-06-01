@@ -7,7 +7,7 @@ def get_db():
             host="localhost",
             dbname="epl_db_2",
             user="postgres",
-            password="Password",
+            password="jialer",
             port=5432
         )
     return g.db
