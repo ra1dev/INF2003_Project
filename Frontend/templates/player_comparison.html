@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Player Comparison</h1>
+
+<form method="GET" class="comparison-filter player-comparison-filter">
+    <div class="filter-field">
+        <label for="season">Season</label>
+        <select id="season" name="season">
+            <option value="all" {% if selected_season == "all" %}selected{% endif %}>All Seasons</option>
+            {% for season in seasons %}
+            <option value="{{ season.season_name }}"
+                    {% if selected_season == season.season_name %}selected{% endif %}>
+                {{ season.season_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="basis">Basis</label>
+        <select id="basis" name="basis">
+            <option value="available" {% if comparison_basis == "available" %}selected{% endif %}>
+                All Available Seasons
+            </option>
+            <option value="common" {% if comparison_basis == "common" %}selected{% endif %}>
+                Common Seasons Only
+            </option>
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="position">Position Filter</label>
+        <select id="position" name="position">
+            <option value="">All Positions</option>
+            {% for position in positions %}
+            <option value="{{ position.position_name }}"
+                    {% if selected_position == position.position_name %}selected{% endif %}>
+                {{ position.position_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="team">Club Filter</label>
+        <select id="team" name="team">
+            <option value="">All Clubs</option>
+            {% for team in teams %}
+            <option value="{{ team.team_name }}"
+                    {% if selected_team == team.team_name %}selected{% endif %}>
+                {{ team.team_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="search">Player Search</label>
+        <input id="search"
+               name="search"
+               type="search"
+               placeholder="Search player"
+               value="{{ player_search }}">
+    </div>
+
+    <div class="filter-field">
+        <label for="player_a">Player A</label>
+        <select id="player_a" name="player_a" required>
+            <option value="">Choose player</option>
+            {% for player in player_options %}
+            <option value="{{ player.player_id }}"
+                    {% if selected_player_a == player.player_id %}selected{% endif %}>
+                {{ player.player_name }} · {{ player.position_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="player_b">Player B</label>
+        <select id="player_b" name="player_b" required>
+            <option value="">Choose player</option>
+            {% for player in player_options %}
+            <option value="{{ player.player_id }}"
+                    {% if selected_player_b == player.player_id %}selected{% endif %}>
+                {{ player.player_name }} · {{ player.position_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="comparison-actions">
+        <button type="submit">Compare</button>
+        <a href="{{ url_for('player_comparison') }}" class="reset-btn">Reset</a>
+    </div>
+</form>
+
+{% if error_message %}
+<div class="comparison-alert">
+    {{ error_message }}
+</div>
+{% endif %}
+
+{% if position_warning %}
+<div class="comparison-alert comparison-alert-info">
+    {{ position_warning }}
+</div>
+{% endif %}
+
+{% if season_count_warning %}
+<div class="comparison-alert comparison-alert-info">
+    {{ season_count_warning }}
+</div>
+{% endif %}
+
+{% if rank_warning %}
+<div class="comparison-alert comparison-alert-info">
+    {{ rank_warning }}
+</div>
+{% endif %}
+
+{% if not selected_player_a or not selected_player_b %}
+<div class="comparison-empty">
+    <h2>Select two players to compare</h2>
+    <p>Use filters to narrow the selector, then compare players across one season or all seasons.</p>
+</div>
+{% endif %}
+
+{% if player_a and player_b %}
+<div class="comparison-scope">
+    {% if is_all_time %}
+        {% if comparison_basis == "common" %}
+        Common Seasons Only compares seasons where both selected players appear in the dataset.
+        {% else %}
+        All Available Seasons shows each player's full available coverage. Per-appearance rates are safest when seasons differ.
+        {% endif %}
+    {% else %}
+    {{ selected_season }} comparison using one normalized player-season row per player.
+    {% endif %}
+</div>
+
+<div class="comparison-header player-comparison-header">
+    <div class="comparison-team-card player-comparison-card">
+        <img src="{{ player_a.image_url }}" alt="{{ player_a.player_name }}">
+        <div>
+            <span>Player A</span>
+            <h2>{{ player_a.player_name }}</h2>
+            <p>{{ player_a.position_name }} · {{ player_a.appearances }} appearances</p>
+            <div class="club-badge-row">
+                {% for club in player_a.club_badges %}
+                <span class="club-badge">{{ club }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="comparison-versus">VS</div>
+
+    <div class="comparison-team-card player-comparison-card">
+        <img src="{{ player_b.image_url }}" alt="{{ player_b.player_name }}">
+        <div>
+            <span>Player B</span>
+            <h2>{{ player_b.player_name }}</h2>
+            <p>{{ player_b.position_name }} · {{ player_b.appearances }} appearances</p>
+            <div class="club-badge-row">
+                {% for club in player_b.club_badges %}
+                <span class="club-badge">{{ club }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="comparison-tab-bar">
+    <button type="button" class="comparison-tab-btn active" data-tab="overview">Overview</button>
+    <button type="button" class="comparison-tab-btn" data-tab="universal">Universal Metrics</button>
+    <button type="button" class="comparison-tab-btn" data-tab="role">Role Metrics</button>
+    <button type="button" class="comparison-tab-btn" data-tab="rankings">Rankings</button>
+    <button type="button" class="comparison-tab-btn" data-tab="trends">Trends</button>
+</div>
+
+<div id="comparison-tab-overview" class="comparison-tab-pane active">
+    {% if summary_insights %}
+    <section class="comparison-panel insight-panel">
+        <h2>Summary Insight</h2>
+        <ul class="insight-list">
+            {% for insight in summary_insights %}
+            <li>{{ insight }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <div class="comparison-section-grid">
+        {% for section in universal_sections[:2] %}
+        <section class="comparison-panel">
+            <h2>{{ section.title }}</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>{{ player_a.player_name }}</th>
+                        <th>{{ player_b.player_name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in section.rows %}
+                    <tr>
+                        <td class="metric-label-cell">
+                            {{ row.label }}
+                            {% if row.description %}
+                            <span class="metric-help" title="{{ row.description }}">i</span>
+                            {% endif %}
+                        </td>
+                        <td class="{% if row.winner == 'a' %}winner-cell{% endif %}">{{ row.a_value }}</td>
+                        <td class="{% if row.winner == 'b' %}winner-cell{% endif %}">{{ row.b_value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="comparison-tab-universal" class="comparison-tab-pane">
+    <div class="comparison-section-grid">
+        {% for section in universal_sections %}
+        <section class="comparison-panel">
+            <h2>{{ section.title }}</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>{{ player_a.player_name }}</th>
+                        <th>{{ player_b.player_name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in section.rows %}
+                    <tr>
+                        <td class="metric-label-cell">
+                            {{ row.label }}
+                            {% if row.description %}
+                            <span class="metric-help" title="{{ row.description }}">i</span>
+                            {% endif %}
+                        </td>
+                        <td class="{% if row.winner == 'a' %}winner-cell{% endif %}">{{ row.a_value }}</td>
+                        <td class="{% if row.winner == 'b' %}winner-cell{% endif %}">{{ row.b_value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="comparison-tab-role" class="comparison-tab-pane">
+    <div class="comparison-section-grid">
+        {% for role in role_sections %}
+            {% if role.comparison %}
+                {% for section in role.sections %}
+                <section class="comparison-panel">
+                    <h2>{{ section.title }}</h2>
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>{{ player_a.player_name }}</th>
+                                <th>{{ player_b.player_name }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in section.rows %}
+                            <tr>
+                                <td class="metric-label-cell">
+                                    {{ row.label }}
+                                    {% if row.description %}
+                                    <span class="metric-help" title="{{ row.description }}">i</span>
+                                    {% endif %}
+                                </td>
+                                <td class="{% if row.winner == 'a' %}winner-cell{% endif %}">{{ row.a_value }}</td>
+                                <td class="{% if row.winner == 'b' %}winner-cell{% endif %}">{{ row.b_value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+                {% endfor %}
+            {% else %}
+                <section class="comparison-panel">
+                    <h2>{{ role.title }}</h2>
+                    <table class="comparison-table single-player-metric-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>{{ role.player.player_name }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in role.rows %}
+                            <tr>
+                                <td class="metric-label-cell">
+                                    {{ row.label }}
+                                    {% if row.description %}
+                                    <span class="metric-help" title="{{ row.description }}">i</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<div id="comparison-tab-rankings" class="comparison-tab-pane">
+    <div class="comparison-section-grid">
+        {% for section in rank_sections %}
+        <section class="comparison-panel">
+            <h2>{{ section.title }}</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>{{ player_a.player_name }}</th>
+                        <th>{{ player_b.player_name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in section.rows %}
+                    <tr>
+                        <td class="metric-label-cell">
+                            {{ row.label }}
+                            {% if row.description %}
+                            <span class="metric-help" title="{{ row.description }}">i</span>
+                            {% endif %}
+                        </td>
+                        <td class="{% if row.winner == 'a' %}winner-cell{% endif %}">{{ row.a_value }}</td>
+                        <td class="{% if row.winner == 'b' %}winner-cell{% endif %}">{{ row.b_value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="comparison-tab-trends" class="comparison-tab-pane">
+    {% if trend_charts %}
+    <section class="comparison-panel trend-panel">
+        <h2>Season Trends</h2>
+        <div class="trend-chart-grid">
+            {% for chart in trend_charts %}
+            <div class="trend-chart-box">
+                <h3>{{ chart.label }}</h3>
+                <div class="trend-chart-wrap">
+                    <canvas id="playerTrendChart{{ loop.index0 }}"></canvas>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if player_a and player_b and trend_charts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var playerTrendCharts = {{ trend_charts | tojson }};
+    var playerTrendLabelColor = "#94a3b8";
+    var playerTrendGridColor = "#334155";
+    var playerTrendChartInstances = [];
+    window.playerTrendChartInstances = playerTrendChartInstances;
+
+    function playerTrendScales() {
+        return {
+            x: {
+                ticks: { color: playerTrendLabelColor, font: { family: "Arial", size: 11 } },
+                grid: { color: playerTrendGridColor }
+            },
+            y: {
+                ticks: { color: playerTrendLabelColor, font: { family: "Arial", size: 11 } },
+                grid: { color: playerTrendGridColor }
+            }
+        };
+    }
+
+    if (window.Chart) {
+        playerTrendCharts.forEach(function (chart, index) {
+            playerTrendChartInstances.push(new Chart(document.getElementById("playerTrendChart" + index), {
+                type: "line",
+                data: {
+                    labels: chart.labels,
+                    datasets: [
+                        {
+                            label: chart.player_a_name,
+                            data: chart.player_a_values,
+                            borderColor: "#60a5fa",
+                            backgroundColor: "rgba(96, 165, 250, 0.14)",
+                            tension: 0.25,
+                            spanGaps: false
+                        },
+                        {
+                            label: chart.player_b_name,
+                            data: chart.player_b_values,
+                            borderColor: "#f59e0b",
+                            backgroundColor: "rgba(245, 158, 11, 0.14)",
+                            tension: 0.25,
+                            spanGaps: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: playerTrendLabelColor, font: { family: "Arial" } }
+                        }
+                    },
+                    scales: playerTrendScales()
+                }
+            }));
+        });
+    }
+</script>
+{% endif %}
+
+{% if player_a and player_b %}
+<script>
+    document.querySelectorAll(".comparison-tab-btn").forEach(function (button) {
+        button.addEventListener("click", function () {
+            var selectedTab = button.dataset.tab;
+
+            document.querySelectorAll(".comparison-tab-btn").forEach(function (tabButton) {
+                tabButton.classList.toggle("active", tabButton === button);
+            });
+
+            document.querySelectorAll(".comparison-tab-pane").forEach(function (pane) {
+                pane.classList.toggle("active", pane.id === "comparison-tab-" + selectedTab);
+            });
+
+            if (selectedTab === "trends" && window.playerTrendChartInstances) {
+                window.playerTrendChartInstances.forEach(function (chart) {
+                    chart.resize();
+                });
+            }
+        });
+    });
+</script>
+{% endif %}
+
+{% endblock %}
