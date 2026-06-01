@@ -50,42 +50,90 @@
         </div>
     </div>
 
-    <div class="player-right-panel">
-
-        <div class="stats-column">
-            <h3>Attacking</h3>
-            <div class="stat-row"><span>Appearances</span><strong>{{ player.total_appearances }}</strong></div>
-            <div class="stat-row"><span>Goals</span><strong>{{ player.total_goals }}</strong></div>
-            <div class="stat-row"><span>Assists</span><strong>{{ player.total_assists }}</strong></div>
-            <div class="stat-row"><span>Shots</span><strong>{{ player.total_shots }}</strong></div>
-            <div class="stat-row"><span>Shots On Target</span><strong>{{ player.total_shots_on_target }}</strong></div>
+    <div class="player-right-panel dynamic-stat-panel"
+         data-storage-key="player-stat-layout-{{ player.player_id }}-{{ player.selected_season }}">
+        <div class="stat-panel-header">
+            <div>
+                <span class="stat-eyebrow">
+                    {% if player.is_combined_view %}
+                        Combined view
+                    {% else %}
+                        {{ player.selected_season }}
+                    {% endif %}
+                </span>
+                <h2>Player Statistics</h2>
+            </div>
+            <button type="button" id="resetStatsBtn">Reset</button>
         </div>
 
-        <div class="stats-column">
-            <h3>Creativity</h3>
-            <div class="stat-row"><span>Big Chances Created</span><strong>{{ player.total_big_chances_created }}</strong></div>
-            <div class="stat-row"><span>Passes</span><strong>{{ player.total_passes }}</strong></div>
-            <div class="stat-row"><span>Crosses</span><strong>{{ player.total_crosses }}</strong></div>
-            <div class="stat-row"><span>Through Balls</span><strong>{{ player.total_through_balls }}</strong></div>
+        <form method="GET" class="season-switcher">
+            <label for="seasonSelect">Season</label>
+            <select id="seasonSelect" name="season" onchange="this.form.submit()">
+                <option value="combined" {% if player.selected_season == "combined" %}selected{% endif %}>
+                    Combined
+                </option>
+                {% for season in player.seasons %}
+                    <option value="{{ season }}" {% if player.selected_season == season %}selected{% endif %}>
+                        {{ season }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="stat-presets" aria-label="Stat presets">
+            <button type="button" data-preset="{{ player.position_key }}">Recommended</button>
+            <button type="button" data-preset="forward">Attack</button>
+            <button type="button" data-preset="midfielder">Midfield</button>
+            <button type="button" data-preset="defender">Defence</button>
+            <button type="button" data-preset="goalkeeper">Goalkeeping</button>
+            <button type="button" data-preset="default">Balanced</button>
         </div>
 
-        <div class="stats-column">
-            <h3>Defending</h3>
-            <div class="stat-row"><span>Tackles</span><strong>{{ player.total_tackles }}</strong></div>
-            <div class="stat-row"><span>Interceptions</span><strong>{{ player.total_interceptions }}</strong></div>
-            <div class="stat-row"><span>Clearances</span><strong>{{ player.total_clearances }}</strong></div>
-            <div class="stat-row"><span>Blocked Shots</span><strong>{{ player.total_blocked_shots }}</strong></div>
-            <div class="stat-row"><span>Recoveries</span><strong>{{ player.total_recoveries }}</strong></div>
-        </div>
+        <input type="search"
+               id="statSearch"
+               class="stat-search"
+               placeholder="Search stats">
 
-        <div class="stats-column">
-            <h3>Duels / Discipline</h3>
-            <div class="stat-row"><span>Duels Won</span><strong>{{ player.total_duels_won }}</strong></div>
-            <div class="stat-row"><span>Aerial Battles Won</span><strong>{{ player.total_aerial_battles_won }}</strong></div>
-            <div class="stat-row"><span>Yellow Cards</span><strong>{{ player.total_yellow_cards }}</strong></div>
-            <div class="stat-row"><span>Red Cards</span><strong>{{ player.total_red_cards }}</strong></div>
-        </div>
+        <section class="stat-builder-section">
+            <h3>Selected Stats</h3>
+            <div class="stat-drop-zone selected-stat-zone" id="selectedStats">
+                {% for stat in player.stat_cards %}
+                    {% if stat.selected %}
+                    <article class="stat-card"
+                             draggable="true"
+                             data-stat-key="{{ stat.key }}"
+                             data-stat-label="{{ stat.label|lower }}"
+                             data-stat-group="{{ stat.group|lower }}">
+                        <span class="drag-handle">::</span>
+                        <span class="stat-group">{{ stat.group }}</span>
+                        <span class="stat-label">{{ stat.label }}</span>
+                        <strong>{{ stat.value }}</strong>
+                    </article>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
 
+        <section class="stat-builder-section">
+            <h3>Available Stats</h3>
+            <div class="stat-drop-zone available-stat-zone" id="availableStats">
+                {% for group in player.available_stat_groups %}
+                    <h4 class="available-stat-heading">{{ group.name }}</h4>
+                    {% for stat in group.stats %}
+                    <article class="stat-card compact-stat-card"
+                             draggable="true"
+                             data-stat-key="{{ stat.key }}"
+                             data-stat-label="{{ stat.label|lower }}"
+                             data-stat-group="{{ stat.group|lower }}">
+                        <span class="drag-handle">::</span>
+                        <span class="stat-group">{{ stat.group }}</span>
+                        <span class="stat-label">{{ stat.label }}</span>
+                        <strong>{{ stat.value }}</strong>
+                    </article>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </section>
     </div>
 </div>
 
@@ -97,15 +145,21 @@
             <th>Season</th>
             <th>Team</th>
             <th>Appearances</th>
+            <th>Goal Contributions</th>
             <th>Goals</th>
             <th>Assists</th>
+            <th>Shot Accuracy</th>
+            <th>Tackles</th>
+            <th>Clean Sheets</th>
+            <th>Saves</th>
             <th>Yellow Cards</th>
             <th>Red Cards</th>
+            <th>Fouls</th>
         </tr>
     </thead>
     <tbody>
         {% for row in stats %}
-        <tr>
+        <tr class="{% if selected_season == row.season_name %}selected-season-row{% endif %}">
             <td>{{ row.season_name }}</td>
             <td>
                 <div class="match-team-cell">
@@ -114,14 +168,204 @@
                 </div>
             </td>
             <td>{{ row.appearances }}</td>
+            <td>{{ (row.goals or 0) + (row.assists or 0) }}</td>
             <td>{{ row.goals }}</td>
             <td>{{ row.assists }}</td>
-            <td>{{ row.yellow_cards }}</td>
-            <td>{{ row.red_cards }}</td>
+            <td>
+                {% if row.shots %}
+                    {{ ((row.shots_on_target or 0) / row.shots * 100)|round(1) }}%
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>{{ row.tackles if row.tackles is not none else "-" }}</td>
+            <td>{{ row.clean_sheets if row.clean_sheets is not none else "-" }}</td>
+            <td>{{ row.saves if row.saves is not none else "-" }}</td>
+            <td>{{ row.yellow_cards if row.yellow_cards is not none else "-" }}</td>
+            <td>{{ row.red_cards if row.red_cards is not none else "-" }}</td>
+            <td>{{ row.fouls if row.fouls is not none else "-" }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<script>
+    const selectedStats = document.getElementById("selectedStats");
+    const availableStats = document.getElementById("availableStats");
+    const statSearch = document.getElementById("statSearch");
+    const resetStatsBtn = document.getElementById("resetStatsBtn");
+    const dynamicPanel = document.querySelector(".dynamic-stat-panel");
+    const storageKey = dynamicPanel.dataset.storageKey;
+    const presetStats = {{ player.preset_stats|tojson }};
+    const roleDefault = {{ player.default_stat_keys|tojson }};
+    let draggedCard = null;
+
+    function allCards() {
+        return [...document.querySelectorAll(".stat-card")];
+    }
+
+    function updateCardDensity() {
+        selectedStats.querySelectorAll(".stat-card").forEach(card => {
+            card.classList.remove("compact-stat-card");
+        });
+
+        availableStats.querySelectorAll(".stat-card").forEach(card => {
+            card.classList.add("compact-stat-card");
+        });
+    }
+
+    function saveLayout() {
+        updateCardDensity();
+        localStorage.setItem(storageKey, JSON.stringify({
+            selected: [...selectedStats.children].map(card => card.dataset.statKey),
+            available: [...availableStats.querySelectorAll(".stat-card")].map(card => card.dataset.statKey)
+        }));
+    }
+
+    function placeAvailableCard(card) {
+        const group = card.dataset.statGroup;
+        const headings = [...availableStats.querySelectorAll(".available-stat-heading")];
+        const heading = headings.find(item => item.textContent.trim().toLowerCase() === group);
+
+        if (!heading) {
+            availableStats.appendChild(card);
+            return;
+        }
+
+        let insertBeforeNode = heading.nextElementSibling;
+
+        while (
+            insertBeforeNode &&
+            !insertBeforeNode.classList.contains("available-stat-heading") &&
+            insertBeforeNode.dataset.statGroup === group
+        ) {
+            insertBeforeNode = insertBeforeNode.nextElementSibling;
+        }
+
+        availableStats.insertBefore(card, insertBeforeNode);
+    }
+
+    function moveByKeys(keys) {
+        const keySet = new Set(keys);
+        const cardsByKey = {};
+
+        allCards().forEach(card => {
+            cardsByKey[card.dataset.statKey] = card;
+        });
+
+        keys.forEach(key => {
+            if (cardsByKey[key]) {
+                selectedStats.appendChild(cardsByKey[key]);
+            }
+        });
+
+        Object.keys(cardsByKey).forEach(key => {
+            if (!keySet.has(key)) {
+                placeAvailableCard(cardsByKey[key]);
+            }
+        });
+
+        saveLayout();
+    }
+
+    function restoreLayout() {
+        let savedLayout = null;
+
+        try {
+            savedLayout = JSON.parse(localStorage.getItem(storageKey) || "null");
+        } catch {
+            localStorage.removeItem(storageKey);
+        }
+
+        if (!savedLayout) {
+            return;
+        }
+
+        const cardsByKey = {};
+        allCards().forEach(card => {
+            cardsByKey[card.dataset.statKey] = card;
+        });
+
+        savedLayout.selected.forEach(key => {
+            if (cardsByKey[key]) {
+                selectedStats.appendChild(cardsByKey[key]);
+            }
+        });
+
+        Object.keys(cardsByKey).forEach(key => {
+            if (!savedLayout.selected.includes(key)) {
+                placeAvailableCard(cardsByKey[key]);
+            }
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const cards = [...container.querySelectorAll(".stat-card:not(.dragging)")];
+
+        return cards.reduce((closest, card) => {
+            const box = card.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: card };
+            }
+
+            return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    allCards().forEach(card => {
+        card.addEventListener("dragstart", () => {
+            draggedCard = card;
+            card.classList.add("dragging");
+        });
+
+        card.addEventListener("dragend", () => {
+            card.classList.remove("dragging");
+            draggedCard = null;
+            saveLayout();
+        });
+    });
+
+    [selectedStats, availableStats].forEach(zone => {
+        zone.addEventListener("dragover", event => {
+            event.preventDefault();
+
+            if (!draggedCard) {
+                return;
+            }
+
+            const afterElement = getDragAfterElement(zone, event.clientY);
+            if (afterElement) {
+                zone.insertBefore(draggedCard, afterElement);
+            } else {
+                zone.appendChild(draggedCard);
+            }
+        });
+    });
+
+    document.querySelectorAll("[data-preset]").forEach(button => {
+        button.addEventListener("click", () => {
+            moveByKeys(presetStats[button.dataset.preset] || roleDefault);
+        });
+    });
+
+    statSearch.addEventListener("input", () => {
+        const query = statSearch.value.trim().toLowerCase();
+
+        allCards().forEach(card => {
+            const matches = `${card.dataset.statLabel} ${card.dataset.statGroup}`.includes(query);
+            card.hidden = query && !matches;
+        });
+    });
+
+    resetStatsBtn.addEventListener("click", () => {
+        moveByKeys(roleDefault);
+    });
+
+    restoreLayout();
+    updateCardDensity();
+</script>
 
 {% else %}
 <h1>Player not found</h1>

@@ -261,7 +261,8 @@ select {
 }
 
 .players-table td:nth-child(2),
-.players-table td:nth-child(3) {
+.players-table td:nth-child(3),
+.players-table td:nth-child(4) {
     text-align: left;
 }
 
@@ -292,8 +293,19 @@ select {
 
 .players-table th:nth-child(3),
 .players-table td:nth-child(3) {
-    width: 35%;
+    width: 25%;
     text-align: left;
+}
+
+.players-table th:nth-child(4),
+.players-table td:nth-child(4) {
+    width: 25%;
+    text-align: left;
+}
+
+.previous-clubs-cell {
+    color: #cbd5e1;
+    white-space: normal !important;
 }
 
 .player-name {
@@ -447,6 +459,187 @@ tr:hover {
     gap: 20px;
 }
 
+.dynamic-stat-panel {
+    display: block;
+}
+
+.stat-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.stat-panel-header h2 {
+    margin: 4px 0 0;
+}
+
+.stat-eyebrow {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stat-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.stat-presets button,
+#resetStatsBtn {
+    background: #334155;
+}
+
+.stat-presets button:hover,
+#resetStatsBtn:hover {
+    background: #475569;
+}
+
+.season-switcher {
+    display: grid;
+    grid-template-columns: 80px minmax(160px, 240px);
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.season-switcher label {
+    color: #cbd5e1;
+    font-weight: 700;
+}
+
+.season-switcher select {
+    width: 100%;
+    background: #0f172a;
+    color: white;
+    border: 1px solid #334155;
+}
+
+.stat-search {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    background: #0f172a;
+    color: white;
+    border: 1px solid #334155;
+}
+
+.stat-builder-section {
+    margin-top: 18px;
+}
+
+.stat-builder-section h3 {
+    margin: 0 0 12px;
+    color: #60a5fa;
+}
+
+.stat-drop-zone {
+    display: grid;
+    gap: 12px;
+    min-height: 96px;
+    padding: 14px;
+    border: 1px dashed #475569;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.selected-stat-zone {
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+}
+
+.available-stat-zone {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    max-height: 285px;
+    overflow-y: auto;
+}
+
+.available-stat-heading {
+    grid-column: 1 / -1;
+    margin: 6px 0 0;
+    color: #94a3b8;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.stat-card {
+    position: relative;
+    min-height: 112px;
+    padding: 14px 14px 14px 36px;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #0f172a;
+    cursor: grab;
+    transition: border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card:hover {
+    border-color: #60a5fa;
+}
+
+.stat-card.dragging {
+    opacity: 0.45;
+    transform: scale(0.98);
+}
+
+.drag-handle {
+    position: absolute;
+    top: 14px;
+    left: 12px;
+    color: #64748b;
+    font-weight: 800;
+    letter-spacing: -2px;
+}
+
+.stat-group,
+.stat-label {
+    display: block;
+}
+
+.stat-group {
+    color: #94a3b8;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.25;
+    min-height: 34px;
+}
+
+.stat-card strong {
+    display: block;
+    margin-top: 10px;
+    color: #f8fafc;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.compact-stat-card {
+    min-height: 80px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.compact-stat-card .stat-label {
+    min-height: 0;
+}
+
+.compact-stat-card strong {
+    font-size: 18px;
+}
+
+.selected-season-row td {
+    background: rgba(37, 99, 235, 0.18);
+}
+
 .stats-column {
     background: #0f172a;
     border-radius: 14px;
@@ -544,6 +737,18 @@ tr:hover {
     }
 
     .player-right-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-panel-header {
+        flex-direction: column;
+    }
+
+    #resetStatsBtn {
+        width: 100%;
+    }
+
+    .season-switcher {
         grid-template-columns: 1fr;
     }
 }
