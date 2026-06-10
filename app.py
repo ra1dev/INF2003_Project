@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, url_for
 from psycopg2.extras import RealDictCursor
 from Backend.db_conn import get_db, init_app
 from Backend.mongo_conn import get_mongo_db
+from Backend.routes.insights import insights_bp
 
 app = Flask(
     __name__,
@@ -10,6 +11,8 @@ app = Flask(
 )
 
 init_app(app)
+
+app.register_blueprint(insights_bp)
 
 PLAYER_STAT_FIELDS = [
     "appearances",

@@ -5,4 +5,6 @@ steps to setup flask:
 3. .\venv\Scripts\activate
 4. pip install flask
 5. pip install psycopg2
-6. change password in db_conn.py
+6. pip install pymongo
+7. pip install dotenv
+8. change password in db_conn.py
