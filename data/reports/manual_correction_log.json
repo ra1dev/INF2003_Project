@@ -1,0 +1,16 @@
+[
+  {
+    "season": "2021/22",
+    "match_date": "2021-08-15",
+    "home_team": "Newcastle",
+    "away_team": "West Ham",
+    "field": "AwayShots",
+    "raw_value": "8",
+    "corrected_value": "18",
+    "reason": "Original row has AwayShotsOnTarget=9, which cannot exceed AwayShots=8. ESPN and StatMuse report West Ham had 18 shots and 9 shots on target.",
+    "sources": [
+      "https://www.espn.com/soccer/match/_/gameId/606037/west-ham-united-newcastle-united",
+      "https://www.statmuse.com/fc/match/8-15-2021-new-vs-whu-11656"
+    ]
+  }
+]

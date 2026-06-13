@@ -4,9 +4,9 @@
 
 <h1>Season Recap</h1>
 
-<!-- Season selector -->
-<form method="GET" class="filter-box" style="margin-bottom: 24px;">
-    <label for="season" style="color:#94a3b8; font-size:0.9rem; margin-right:8px;">Season:</label>
+<!-- Top filter bar: season + search boxes -->
+<form method="GET" class="filter-box" style="margin-bottom: 24px; display:flex; align-items:center; flex-wrap:wrap; gap:12px;">
+    <label for="season" style="color:#94a3b8; font-size:0.9rem;">Season:</label>
     <select name="season" id="season" onchange="this.form.submit()">
         {% for s in seasons %}
         <option value="{{ s.season_name }}" {% if selected_season==s.season_name %}selected{% endif %}>
@@ -14,11 +14,36 @@
         </option>
         {% endfor %}
     </select>
+
+    <input type="text"
+           id="teamSearch"
+           placeholder="Search team in standings..."
+           style="width:220px;background:#1e293b;color:white;border:1px solid #334155;"
+           oninput="filterStandings()">
+
+    <input type="text"
+           id="playerSearch"
+           placeholder="Search player or club..."
+           style="width:220px;background:#1e293b;color:white;border:1px solid #334155;"
+           oninput="filterPlayers()">
 </form>
+
+<!-- Hidden data containers for JS -->
+<div id="chart-data"
+    data-goals-labels='{{ goals_by_team | map(attribute="team_name") | list | tojson }}'
+    data-goals-values='{{ goals_by_team | map(attribute="goals_scored") | list | tojson }}'
+    data-outcome-home="{{ (outcomes.home_wins or 0) if outcomes else 0 }}"
+    data-outcome-draws="{{ (outcomes.draws or 0) if outcomes else 0 }}"
+    data-outcome-away="{{ (outcomes.away_wins or 0) if outcomes else 0 }}"
+    data-disc-labels='{{ discipline | map(attribute="team_name") | list | tojson }}'
+    data-disc-yellow='{{ discipline | map(attribute="yellow_cards") | list | tojson }}'
+    data-disc-red='{{ discipline | map(attribute="red_cards") | list | tojson }}'
+    data-def-labels='{{ standings[:8] | map(attribute="team_name") | list | tojson }}'
+    data-def-values='{{ standings[:8] | map(attribute="ga") | list | tojson }}'
+    style="display:none"></div>
 
 <!-- KPI STRIP -->
 <div class="kpi-strip">
-
     <div class="kpi-card kpi-gold">
         <div class="kpi-label">Champion</div>
         <div class="kpi-value kpi-value-sm">
@@ -27,55 +52,42 @@
             {{ champion.team_name }}
             {% else %}N/A{% endif %}
         </div>
-        <div class="kpi-sub">{{ champion.pts if champion else '–' }} pts</div>
+        <div class="kpi-sub">{{ champion.pts if champion else "–" }} pts</div>
     </div>
 
     <div class="kpi-card">
         <div class="kpi-label">Matches played</div>
-        <div class="kpi-value">{{ goal_kpis.total_matches if goal_kpis else '–' }}</div>
+        <div class="kpi-value">{{ goal_kpis.total_matches if goal_kpis else "–" }}</div>
         <div class="kpi-sub">This season</div>
     </div>
 
     <div class="kpi-card kpi-green">
         <div class="kpi-label">Total goals</div>
-        <div class="kpi-value">{{ goal_kpis.total_goals if goal_kpis else '–' }}</div>
-        <div class="kpi-sub">{{ goal_kpis.avg_goals if goal_kpis else '–' }} per match</div>
+        <div class="kpi-value">{{ goal_kpis.total_goals if goal_kpis else "–" }}</div>
+        <div class="kpi-sub">{{ goal_kpis.avg_goals if goal_kpis else "–" }} per match</div>
     </div>
 
     <div class="kpi-card kpi-teal">
         <div class="kpi-label">Top scorer</div>
-        <div class="kpi-value kpi-value-sm">
-            {{ top_scorer.player_name if top_scorer else 'N/A' }}
-        </div>
-        <div class="kpi-sub">
-            {% if top_scorer %}{{ top_scorer.goals }} goals · {{ top_scorer.team_name }}{% endif %}
-        </div>
+        <div class="kpi-value kpi-value-sm">{{ top_scorer.player_name if top_scorer else "N/A" }}</div>
+        <div class="kpi-sub">{% if top_scorer %}{{ top_scorer.goals }} goals · {{ top_scorer.team_name }}{% endif %}</div>
     </div>
 
     <div class="kpi-card">
         <div class="kpi-label">Most clean sheets</div>
-        <div class="kpi-value kpi-value-sm">
-            {{ top_cs.player_name if top_cs else 'N/A' }}
-        </div>
-        <div class="kpi-sub">
-            {% if top_cs %}{{ top_cs.clean_sheets }} · {{ top_cs.team_name }}{% endif %}
-        </div>
+        <div class="kpi-value kpi-value-sm">{{ top_cs.player_name if top_cs else "N/A" }}</div>
+        <div class="kpi-sub">{% if top_cs %}{{ top_cs.clean_sheets }} · {{ top_cs.team_name }}{% endif %}</div>
     </div>
 
     <div class="kpi-card kpi-red">
         <div class="kpi-label">Total bookings</div>
         <div class="kpi-value">
-            {% if card_kpis %}
-            {{ (card_kpis.total_yellow or 0) + (card_kpis.total_red or 0) }}
-            {% else %}–{% endif %}
+            {% if card_kpis %}{{ (card_kpis.total_yellow or 0) + (card_kpis.total_red or 0) }}{% else %}–{% endif %}
         </div>
         <div class="kpi-sub">
-            {% if card_kpis %}
-            {{ card_kpis.total_yellow or 0 }} yellow · {{ card_kpis.total_red or 0 }} red
-            {% endif %}
+            {% if card_kpis %}{{ card_kpis.total_yellow or 0 }} yellow · {{ card_kpis.total_red or 0 }} red{% endif %}
         </div>
     </div>
-
 </div>
 
 <!-- CHARTS ROW 1 -->
@@ -110,7 +122,7 @@
 <!-- LEAGUE TABLE -->
 <div class="recap-section-title">Final standings</div>
 
-<table>
+<table id="standingsTable">
     <thead>
         <tr>
             <th>#</th>
@@ -128,13 +140,12 @@
     <tbody>
         {% for team in standings %}
         {% set pos = loop.index %}
-        <tr
-            class="{% if pos == 1 %}row-champion{% elif pos <= 4 %}row-cl{% elif pos >= standings|length - 2 %}row-rel{% endif %}">
+        <tr class="standings-row {% if pos == 1 %}row-champion{% elif pos <= 4 %}row-cl{% elif pos >= standings|length - 2 %}row-rel{% endif %}">
             <td style="color:#94a3b8; font-weight:700; text-align:center;">{{ pos }}</td>
             <td>
                 <div class="match-team-cell">
                     <img src="{{ team.team_logo }}" class="mini-logo">
-                    <span>{{ team.team_name }}</span>
+                    <span class="row-team-name">{{ team.team_name }}</span>
                 </div>
             </td>
             <td style="text-align:center">{{ team.played }}</td>
@@ -143,8 +154,7 @@
             <td style="text-align:center">{{ team.losses }}</td>
             <td style="text-align:center">{{ team.gf }}</td>
             <td style="text-align:center">{{ team.ga }}</td>
-            <td
-                style="text-align:center; color:{% if team.gd > 0 %}#22c55e{% elif team.gd < 0 %}#ef4444{% else %}#94a3b8{% endif %}">
+            <td style="text-align:center; color:{% if team.gd > 0 %}#22c55e{% elif team.gd < 0 %}#ef4444{% else %}#94a3b8{% endif %}">
                 {% if team.gd > 0 %}+{% endif %}{{ team.gd }}
             </td>
             <td style="text-align:center; color:#60a5fa; font-weight:800; font-size:1rem;">{{ team.pts }}</td>
@@ -182,37 +192,27 @@
         {% set max_val = goals_leaders[0].val if goals_leaders else 1 %}
         <table>
             <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Club</th>
-                    <th>Goals</th>
-                </tr>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Goals</th></tr>
             </thead>
             <tbody>
                 {% for p in goals_leaders %}
-                <tr>
-                    <td
-                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                <tr class="player-row">
+                    <td style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
                         {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
                     </td>
-                    <td style="font-weight:600">{{ p.player_name }}</td>
-                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td style="font-weight:600" class="player-name-cell">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8" class="player-club-cell">{{ p.team_name or "–" }}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
-                                <div
-                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#2563eb;border-radius:999px">
-                                </div>
+                                <div style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#2563eb;border-radius:999px"></div>
                             </div>
                             <span style="color:#60a5fa;font-weight:700;min-width:24px">{{ p.val }}</span>
                         </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
-                </tr>
+                <tr><td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -223,37 +223,27 @@
         {% set max_val = assists_leaders[0].val if assists_leaders else 1 %}
         <table>
             <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Club</th>
-                    <th>Assists</th>
-                </tr>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Assists</th></tr>
             </thead>
             <tbody>
                 {% for p in assists_leaders %}
-                <tr>
-                    <td
-                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                <tr class="player-row">
+                    <td style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
                         {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
                     </td>
-                    <td style="font-weight:600">{{ p.player_name }}</td>
-                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td style="font-weight:600" class="player-name-cell">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8" class="player-club-cell">{{ p.team_name or "–" }}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
-                                <div
-                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#f59e0b;border-radius:999px">
-                                </div>
+                                <div style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#f59e0b;border-radius:999px"></div>
                             </div>
                             <span style="color:#f59e0b;font-weight:700;min-width:24px">{{ p.val }}</span>
                         </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
-                </tr>
+                <tr><td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -264,37 +254,27 @@
         {% set max_val = cs_leaders[0].val if cs_leaders else 1 %}
         <table>
             <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Club</th>
-                    <th>Clean sheets</th>
-                </tr>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Clean sheets</th></tr>
             </thead>
             <tbody>
                 {% for p in cs_leaders %}
-                <tr>
-                    <td
-                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                <tr class="player-row">
+                    <td style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
                         {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
                     </td>
-                    <td style="font-weight:600">{{ p.player_name }}</td>
-                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td style="font-weight:600" class="player-name-cell">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8" class="player-club-cell">{{ p.team_name or "–" }}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
-                                <div
-                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#22c55e;border-radius:999px">
-                                </div>
+                                <div style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#22c55e;border-radius:999px"></div>
                             </div>
                             <span style="color:#22c55e;font-weight:700;min-width:24px">{{ p.val }}</span>
                         </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
-                </tr>
+                <tr><td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -305,37 +285,27 @@
         {% set max_val = tackles_leaders[0].val if tackles_leaders else 1 %}
         <table>
             <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Club</th>
-                    <th>Tackles</th>
-                </tr>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Tackles</th></tr>
             </thead>
             <tbody>
                 {% for p in tackles_leaders %}
-                <tr>
-                    <td
-                        style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
+                <tr class="player-row">
+                    <td style="text-align:center;font-weight:700;color:{% if loop.index==1 %}#f59e0b{% else %}#94a3b8{% endif %}">
                         {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
                     </td>
-                    <td style="font-weight:600">{{ p.player_name }}</td>
-                    <td style="color:#94a3b8">{{ p.team_name or '–' }}</td>
+                    <td style="font-weight:600" class="player-name-cell">{{ p.player_name }}</td>
+                    <td style="color:#94a3b8" class="player-club-cell">{{ p.team_name or "–" }}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="flex:1;height:7px;background:#334155;border-radius:999px;overflow:hidden">
-                                <div
-                                    style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#14b8a6;border-radius:999px">
-                                </div>
+                                <div style="width:{{ (p.val / max_val * 100)|round }}%;height:100%;background:#14b8a6;border-radius:999px"></div>
                             </div>
                             <span style="color:#14b8a6;font-weight:700;min-width:24px">{{ p.val }}</span>
                         </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td>
-                </tr>
+                <tr><td colspan="4" style="text-align:center;color:#64748b;padding:20px">No data</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -350,30 +320,16 @@
         gap: 16px;
         margin-bottom: 28px;
     }
-
     .kpi-card {
         background: #1e293b;
         border-radius: 14px;
         padding: 20px 18px;
         border-top: 3px solid #2563eb;
     }
-
-    .kpi-card.kpi-gold {
-        border-top-color: #f59e0b;
-    }
-
-    .kpi-card.kpi-green {
-        border-top-color: #22c55e;
-    }
-
-    .kpi-card.kpi-teal {
-        border-top-color: #14b8a6;
-    }
-
-    .kpi-card.kpi-red {
-        border-top-color: #ef4444;
-    }
-
+    .kpi-card.kpi-gold { border-top-color: #f59e0b; }
+    .kpi-card.kpi-green { border-top-color: #22c55e; }
+    .kpi-card.kpi-teal { border-top-color: #14b8a6; }
+    .kpi-card.kpi-red { border-top-color: #ef4444; }
     .kpi-label {
         color: #94a3b8;
         font-size: 0.75rem;
@@ -381,7 +337,6 @@
         letter-spacing: .07em;
         margin-bottom: 6px;
     }
-
     .kpi-value {
         font-size: 1.7rem;
         font-weight: 800;
@@ -391,17 +346,8 @@
         align-items: center;
         gap: 8px;
     }
-
-    .kpi-value-sm {
-        font-size: 1rem;
-    }
-
-    .kpi-sub {
-        color: #64748b;
-        font-size: 0.78rem;
-        margin-top: 5px;
-    }
-
+    .kpi-value-sm { font-size: 1rem; }
+    .kpi-sub { color: #64748b; font-size: 0.78rem; margin-top: 5px; }
     .recap-section-title {
         font-size: 1.05rem;
         font-weight: 700;
@@ -410,43 +356,18 @@
         border-left: 3px solid #2563eb;
         padding-left: 12px;
     }
-
-    .recap-panel-title {
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .recap-panel-sub {
-        color: #64748b;
-        font-size: 0.78rem;
-        margin-bottom: 16px;
-    }
-
+    .recap-panel-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .recap-panel-sub { color: #64748b; font-size: 0.78rem; margin-bottom: 16px; }
     .recap-two-col {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
         margin-bottom: 16px;
     }
-
-    .recap-chart-wrap {
-        position: relative;
-        height: 280px;
-    }
-
-    .row-champion td {
-        border-left: 3px solid #f59e0b;
-    }
-
-    .row-cl td {
-        border-left: 3px solid #60a5fa;
-    }
-
-    .row-rel td {
-        border-left: 3px solid #ef4444;
-    }
-
+    .recap-chart-wrap { position: relative; height: 280px; }
+    .row-champion td { border-left: 3px solid #f59e0b; }
+    .row-cl td { border-left: 3px solid #60a5fa; }
+    .row-rel td { border-left: 3px solid #ef4444; }
     .zone-legend {
         display: flex;
         gap: 20px;
@@ -455,7 +376,6 @@
         font-size: 0.78rem;
         color: #94a3b8;
     }
-
     .zone-dot {
         display: inline-block;
         width: 10px;
@@ -463,13 +383,11 @@
         border-radius: 50%;
         margin-right: 5px;
     }
-
     .tab-bar {
         display: flex;
         border-bottom: 2px solid #334155;
         margin-bottom: 16px;
     }
-
     .tab-btn {
         padding: 9px 18px;
         border: none;
@@ -481,55 +399,31 @@
         border-bottom: 2px solid transparent;
         margin-bottom: -2px;
     }
-
-    .tab-btn:hover {
-        color: white;
-    }
-
-    .tab-btn.active {
-        color: #60a5fa;
-        border-bottom-color: #60a5fa;
-    }
-
-    .tab-pane {
-        display: none;
-    }
-
-    .tab-pane.active {
-        display: block;
-    }
-
+    .tab-btn:hover { color: white; }
+    .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
     @media (max-width:900px) {
-        .recap-two-col {
-            grid-template-columns: 1fr;
-        }
-
-        .kpi-strip {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .recap-chart-wrap {
-            height: 220px;
-        }
+        .recap-two-col { grid-template-columns: 1fr; }
+        .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+        .recap-chart-wrap { height: 220px; }
     }
 </style>
 
 <!-- CHART.JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    /* jshint ignore:start */
-    /* eslint-disable */
-
-    var goalsLabels = {{ goals_by_team | map(attribute = 'team_name') | list | tojson }};
-    var goalsValues = {{ goals_by_team | map(attribute = 'goals_scored') | list | tojson }};
-    var outcomeHome = {{ (outcomes.home_wins or 0) if outcomes else 0 }};
-    var outcomeDraws = {{ (outcomes.draws     or 0) if outcomes else 0 }};
-    var outcomeAway = {{ (outcomes.away_wins or 0) if outcomes else 0 }};
-    var discLabels = {{ discipline | map(attribute = 'team_name') | list | tojson }};
-    var discYellow = {{ discipline | map(attribute = 'yellow_cards') | list | tojson }};
-    var discRed = {{ discipline | map(attribute = 'red_cards') | list | tojson }};
-    var defLabels = {{ standings[:8] | map(attribute = 'team_name') | list | tojson }};
-    var defValues = {{ standings[:8] | map(attribute = 'ga') | list | tojson }};
+    var _cd = document.getElementById("chart-data").dataset;
+    var goalsLabels = JSON.parse(_cd.goalsLabels);
+    var goalsValues = JSON.parse(_cd.goalsValues);
+    var outcomeHome = Number(_cd.outcomeHome);
+    var outcomeDraws = Number(_cd.outcomeDraws);
+    var outcomeAway = Number(_cd.outcomeAway);
+    var discLabels = JSON.parse(_cd.discLabels);
+    var discYellow = JSON.parse(_cd.discYellow);
+    var discRed = JSON.parse(_cd.discRed);
+    var defLabels = JSON.parse(_cd.defLabels);
+    var defValues = JSON.parse(_cd.defValues);
 
     var LABEL_COLOR = "#94a3b8";
     var GRID_COLOR = "#334155";
@@ -548,7 +442,8 @@
             datasets: [{ label: "Goals scored", data: goalsValues, backgroundColor: "#2563eb", borderRadius: 8 }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
             scales: axisOpts()
         }
@@ -560,12 +455,20 @@
             labels: ["Home wins", "Draws", "Away wins"],
             datasets: [{
                 data: [outcomeHome, outcomeDraws, outcomeAway],
-                backgroundColor: ["#22c55e", "#f59e0b", "#2563eb"], borderWidth: 0, hoverOffset: 8
+                backgroundColor: ["#22c55e", "#f59e0b", "#2563eb"],
+                borderWidth: 0,
+                hoverOffset: 8
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: "bottom", labels: { color: LABEL_COLOR, font: { family: "Arial" }, padding: 14 } } }
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: { color: LABEL_COLOR, font: { family: "Arial" }, padding: 14 }
+                }
+            }
         }
     });
 
@@ -579,36 +482,62 @@
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
             scales: axisOpts()
         }
     });
 
-    var defPairs = defLabels.map(function (l, i) { return { label: l, val: defValues[i] }; });
-    defPairs.sort(function (a, b) { return a.val - b.val; });
+    var defPairs = defLabels.map(function(l, i) { return { label: l, val: defValues[i] }; });
+    defPairs.sort(function(a, b) { return a.val - b.val; });
+
     new Chart(document.getElementById("defenceChart"), {
         type: "bar",
         data: {
-            labels: defPairs.map(function (d) { return d.label; }),
+            labels: defPairs.map(function(d) { return d.label; }),
             datasets: [{
-                label: "Goals conceded", data: defPairs.map(function (d) { return d.val; }),
-                backgroundColor: "#14b8a6", borderRadius: 6
+                label: "Goals conceded",
+                data: defPairs.map(function(d) { return d.val; }),
+                backgroundColor: "#14b8a6",
+                borderRadius: 6
             }]
         },
         options: {
             indexAxis: "y",
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
             scales: axisOpts()
         }
     });
 
     function openTab(e, id) {
-        document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
-        document.querySelectorAll(".tab-pane").forEach(function (p) { p.classList.remove("active"); });
+        document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+        document.querySelectorAll(".tab-pane").forEach(function(p) { p.classList.remove("active"); });
         e.target.classList.add("active");
         document.getElementById(id).classList.add("active");
+        filterPlayers();
+    }
+
+    function filterStandings() {
+        var q = document.getElementById("teamSearch").value.toLowerCase();
+        document.querySelectorAll(".standings-row").forEach(function(row) {
+            var name = row.querySelector(".row-team-name").textContent.toLowerCase();
+            row.style.display = name.includes(q) ? "" : "none";
+        });
+    }
+
+    function filterPlayers() {
+        var q = document.getElementById("playerSearch").value.toLowerCase();
+        var activePane = document.querySelector(".tab-pane.active");
+        if (!activePane) return;
+
+        activePane.querySelectorAll(".player-row").forEach(function(row) {
+            var name = row.querySelector(".player-name-cell").textContent.toLowerCase();
+            var club = row.querySelector(".player-club-cell").textContent.toLowerCase();
+            row.style.display = (name.includes(q) || club.includes(q)) ? "" : "none";
+        });
     }
 </script>
 
