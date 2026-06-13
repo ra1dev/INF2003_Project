@@ -47,7 +47,7 @@
         {% for player in players %}
 
     <tr class="clickable-row"
-        data-href="{{ url_for('player_detail', player_id=player.player_id) }}">
+        data-href="{{ url_for('players.player_detail', player_id=player.player_id) }}">
 
         <td>{{ player.player_id }}</td>
 
