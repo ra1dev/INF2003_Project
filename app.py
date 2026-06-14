@@ -123,6 +123,7 @@ def format_statsbomb_event(event):
         "timestamp": timestamp or "--:--",
         "period": period,
         "type_name": event_type.get("name") or "Event",
+        "player_id": player.get("id"),
         "player_name": player.get("name") or "Unknown player",
         "team_name": team.get("name") or "Unknown team",
         "description": " - ".join(description_parts),
@@ -436,6 +437,72 @@ def match_detail(match_id):
         match=match,
         events=events,
         key_events=key_events
+    )
+
+
+@app.route("/match/<int:match_id>/player/<int:player_id>")
+def player_match_performance(match_id, player_id):
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT
+            mr.match_id,
+            mr.match_date,
+            s.season_name,
+            home.team_name AS home_team,
+            away.team_name AS away_team,
+            mr.full_time_home_goals,
+            mr.full_time_away_goals
+        FROM match_record mr
+        INNER JOIN season s ON mr.season_id = s.season_id
+        INNER JOIN team home ON mr.home_team_id = home.team_id
+        INNER JOIN team away ON mr.away_team_id = away.team_id
+        WHERE mr.match_id = %s;
+    """, (match_id,))
+
+    match = cur.fetchone()
+    cur.close()
+
+    if not match:
+        return render_template("404.html", message="Match not found"), 404
+
+    player_perf = None
+    try:
+        mongo_db = get_mongo_db()
+        player_collection = mongo_db["player_match_performance"]
+        player_perf = player_collection.find_one({"player_id": player_id, "match_id": match_id})
+        
+        if not player_perf:
+            player_collection = mongo_db["player_match_performance"]
+            player_perf = player_collection.find_one({"player_id": player_id})
+            
+            if player_perf and player_perf.get("app_match_id"):
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute(
+                    "SELECT match_id FROM match_record WHERE match_id = %s;",
+                    (match_id,)
+                )
+                if not cur.fetchone():
+                    player_perf = None
+                cur.close()
+    except Exception:
+        player_perf = None
+
+    if not player_perf:
+        return render_template(
+            "player_match_performance.html",
+            title="Player Performance",
+            match=match,
+            player_perf=None,
+            error="Player performance data not found for this match."
+        ), 404
+
+    return render_template(
+        "player_match_performance.html",
+        title="Player Performance",
+        match=match,
+        player_perf=player_perf
     )
 
 

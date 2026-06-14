@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -12,9 +13,14 @@ from dotenv import load_dotenv
 from pymongo import ASCENDING, MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR
+PROJECT_ROOT = SCRIPT_DIR.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from Backend.mongo_player_performance import build_player_performance
 
 load_dotenv(SCRIPT_DIR / ".env")
 
@@ -128,7 +134,19 @@ def open_match_events_collection(mongo_uri: str, mongo_db: str):
         unique=True,
         name="match_events_unique",
     )
-    return client, collection
+    
+    player_collection = client[mongo_db]["player_match_performance"]
+    player_collection.create_index(
+        [("app_match_id", ASCENDING), ("player_id", ASCENDING)],
+        unique=True,
+        name="player_match_performance_unique",
+    )
+    player_collection.create_index(
+        [("player_name", ASCENDING), ("team_name", ASCENDING)],
+        name="player_lookup",
+    )
+    
+    return client, collection, player_collection
 
 
 def reset_database(client: MongoClient, mongo_db: str) -> int:
@@ -170,8 +188,9 @@ def main() -> int:
 
     client = None
     collection = None
+    player_collection = None
     if not args.dry_run:
-        client, collection = open_match_events_collection(args.mongo_uri, args.mongo_db)
+        client, collection, player_collection = open_match_events_collection(args.mongo_uri, args.mongo_db)
         if args.reset_db:
             dropped_collections = reset_database(client, args.mongo_db)
             collection = client[args.mongo_db]["match_events"]
@@ -179,6 +198,12 @@ def main() -> int:
                 [("app_match_id", ASCENDING), ("statsbomb_match_id", ASCENDING)],
                 unique=True,
                 name="match_events_unique",
+            )
+            player_collection = client[args.mongo_db]["player_match_performance"]
+            player_collection.create_index(
+                [("app_match_id", ASCENDING), ("player_id", ASCENDING)],
+                unique=True,
+                name="player_match_performance_unique",
             )
             print(f"Reset database {args.mongo_db}; dropped {dropped_collections} collections.")
 
@@ -224,12 +249,15 @@ def main() -> int:
                 "events": events,
                 "imported_at": imported_at,
             }
+            
+            player_perf_docs = build_player_performance(events, metadata)
 
             mapped_files += 1
             if args.dry_run:
                 print(
                     f"[dry-run] would upsert app_match_id={app_match_id} "
-                    f"statsbomb_match_id={statsbomb_match_id} events={len(events)}"
+                    f"statsbomb_match_id={statsbomb_match_id} events={len(events)} "
+                    f"players={len(player_perf_docs)}"
                 )
                 continue
 
@@ -238,6 +266,18 @@ def main() -> int:
                 {"$set": document},
                 upsert=True,
             )
+            
+            for player_doc in player_perf_docs:
+                player_doc["app_match_id"] = app_match_id
+                player_doc["statsbomb_match_id"] = statsbomb_match_id
+                player_doc["match_date"] = None
+                
+                player_collection.update_one(
+                    {"app_match_id": app_match_id, "player_id": player_doc["player_id"]},
+                    {"$set": player_doc},
+                    upsert=True,
+                )
+            
             upserted_documents += 1
     finally:
         if client is not None:
