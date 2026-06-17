@@ -295,7 +295,7 @@ def format_statsbomb_event(event):
         "timestamp": timestamp or "--:--",
         "period": period,
         "type_name": event_type.get("name") or "Event",
-        "player_name": player.get("name") or "Unknown player",
+        "player_name": player.get("name") or "-",
         "team_name": team.get("name") or "Unknown team",
         "description": " - ".join(description_parts),
         "location_label": location_label,
