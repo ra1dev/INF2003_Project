@@ -132,6 +132,41 @@ tr:hover {
     background: #334155;
 }
 
+.row-up {
+    background: rgba(34, 197, 94, 0.12);
+}
+
+.row-down {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.season-table-controls {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.season-table-controls .controls-left,
+.season-table-controls .controls-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.season-table-footer {
+    margin-top: 12px;
+    color: #94a3b8;
+}
+
+.pos-change {
+    width: 28px;
+    text-align: center;
+    font-weight: 700;
+}
+
 /* Center columns */
 td:nth-child(2),
 td:nth-child(3) {

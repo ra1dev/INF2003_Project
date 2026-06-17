@@ -1101,6 +1101,176 @@ def season_recap():
     )
 
 
+@app.route("/season-table")
+def season_table():
+    selected_season = request.args.get("season")
+    selected_week = request.args.get("week", type=int)
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("SELECT season_name FROM season ORDER BY season_name;")
+    seasons = cur.fetchall()
+
+    if not selected_season and seasons:
+        selected_season = seasons[-1]["season_name"]
+
+    cur.execute("""
+        SELECT
+            mr.match_id,
+            mr.match_date,
+            mr.home_team_id,
+            mr.away_team_id,
+            mr.full_time_home_goals,
+            mr.full_time_away_goals,
+            ht.team_name AS home_team_name,
+            ht.team_logo AS home_team_logo,
+            at.team_name AS away_team_name,
+            at.team_logo AS away_team_logo
+        FROM match_record mr
+        JOIN season s ON mr.season_id = s.season_id
+        JOIN team ht ON mr.home_team_id = ht.team_id
+        JOIN team at ON mr.away_team_id = at.team_id
+        WHERE s.season_name = %s
+        ORDER BY mr.match_date ASC, mr.match_id ASC;
+    """, (selected_season,))
+    match_rows = cur.fetchall()
+
+    cur.close()
+
+    weekly_matches = []
+
+    for idx, row in enumerate(match_rows):
+        if idx % 10 == 0:
+            week_number = idx // 10 + 1
+            weekly_matches.append({
+                "week": week_number,
+                "match_date": row["match_date"].isoformat(),
+                "matches": [],
+            })
+        weekly_matches[-1]["matches"].append(row)
+
+    def start_team_record(team_id, team_name, team_logo):
+        return {
+            "team_id": team_id,
+            "team_name": team_name,
+            "team_logo": team_logo or (
+                'https://ui-avatars.com/api/?name=' + team_name.replace(' ', '+') +
+                '&background=1e293b&color=ffffff&size=128'
+            ),
+            "played": 0,
+            "wins": 0,
+            "draws": 0,
+            "losses": 0,
+            "gf": 0,
+            "ga": 0,
+            "gd": 0,
+            "pts": 0,
+        }
+
+    team_state = {}
+    sorted_week_snapshots = []
+
+    for week_index, week in enumerate(weekly_matches, start=1):
+        for match in week["matches"]:
+            home_id = match["home_team_id"]
+            away_id = match["away_team_id"]
+            if home_id not in team_state:
+                team_state[home_id] = start_team_record(
+                    home_id,
+                    match["home_team_name"],
+                    match["home_team_logo"],
+                )
+            if away_id not in team_state:
+                team_state[away_id] = start_team_record(
+                    away_id,
+                    match["away_team_name"],
+                    match["away_team_logo"],
+                )
+
+            home = team_state[home_id]
+            away = team_state[away_id]
+            home_goals = match["full_time_home_goals"]
+            away_goals = match["full_time_away_goals"]
+
+            home["played"] += 1
+            away["played"] += 1
+            home["gf"] += home_goals
+            home["ga"] += away_goals
+            away["gf"] += away_goals
+            away["ga"] += home_goals
+
+            if home_goals > away_goals:
+                home["wins"] += 1
+                away["losses"] += 1
+                home["pts"] += 3
+            elif home_goals < away_goals:
+                away["wins"] += 1
+                home["losses"] += 1
+                away["pts"] += 3
+            else:
+                home["draws"] += 1
+                away["draws"] += 1
+                home["pts"] += 1
+                away["pts"] += 1
+
+            home["gd"] = home["gf"] - home["ga"]
+            away["gd"] = away["gf"] - away["ga"]
+
+        standings = sorted(
+            [dict(team) for team in team_state.values()],
+            key=lambda team: (
+                -team["pts"],
+                -team["gd"],
+                -team["gf"],
+                team["team_name"],
+            )
+        )
+        for position, team in enumerate(standings, start=1):
+            team["position"] = position
+
+        sorted_week_snapshots.append({
+            "week": week_index,
+            "match_date": week["match_date"],
+            "standings": standings,
+        })
+
+    for index, snapshot in enumerate(sorted_week_snapshots):
+        previous = sorted_week_snapshots[index - 1]["standings"] if index > 0 else []
+        previous_positions = {team["team_name"]: team["position"] for team in previous}
+        for team in snapshot["standings"]:
+            prior_position = previous_positions.get(team["team_name"])
+            if prior_position is None:
+                team["movement"] = None
+                team["movement_delta"] = 0
+            else:
+                team["movement_delta"] = abs(team["position"] - prior_position)
+                if team["position"] < prior_position:
+                    team["movement"] = "up"
+                elif team["position"] > prior_position:
+                    team["movement"] = "down"
+                else:
+                    team["movement"] = None
+                    team["movement_delta"] = 0
+
+    if selected_week is None:
+        selected_week = 1
+    if selected_week < 1:
+        selected_week = 1
+    if selected_week > len(sorted_week_snapshots):
+        selected_week = len(sorted_week_snapshots) if sorted_week_snapshots else 1
+
+    return render_template(
+        "season_table.html",
+        title="Season Table",
+        seasons=seasons,
+        selected_season=selected_season,
+        selected_week=selected_week,
+        weeks=sorted_week_snapshots,
+        week_tables=sorted_week_snapshots,
+    )
+
+
 @app.route("/db")
 def db_test():
     conn = get_db()

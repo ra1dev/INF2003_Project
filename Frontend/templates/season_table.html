@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Season Table</h1>
+
+<form method="GET" class="filter-box" style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
+    <label for="season" style="color:#94a3b8;font-size:0.95rem;">Season:</label>
+    <select name="season" id="season" onchange="this.form.submit()">
+        {% for s in seasons %}
+        <option value="{{ s.season_name }}" {% if selected_season == s.season_name %}selected{% endif %}>
+            {{ s.season_name }}
+        </option>
+        {% endfor %}
+    </select>
+    <input type="hidden" name="week" id="weekInput" value="{{ selected_week if selected_week else 1 }}">
+</form>
+
+<div class="season-table-controls">
+    <div class="controls-left">
+        <span style="color:#94a3b8;font-size:0.95rem;">Gameweek:</span>
+        <strong id="weekLabel" style="margin-left:8px;">GW {{ selected_week if selected_week else 1 }}</strong>
+        <select id="weekSelect" style="margin-left:12px;padding:8px;border-radius:8px;border:none;min-width:100px;background:#1e293b;color:white;">
+            {% for w in weeks %}
+            <option value="{{ w.week }}" {% if selected_week == w.week %}selected{% endif %}>GW {{ w.week }}</option>
+            {% endfor %}
+        </select>
+        <span id="weekDate" style="color:#94a3b8;margin-left:10px;font-size:0.95rem;">
+            {% if weeks and selected_week %}{{ weeks[selected_week-1].match_date }}{% endif %}
+        </span>
+    </div>
+
+    <div class="controls-right">
+        <button type="button" id="prevWeekBtn">Previous</button>
+        <button type="button" id="playBtn">Play</button>
+        <button type="button" id="pauseBtn" disabled>Pause</button>
+        <button type="button" id="nextWeekBtn">Next</button>
+    </div>
+</div>
+
+<table class="season-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th></th>
+            <th>Team</th>
+            <th>Pld</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+            <th>GF</th>
+            <th>GA</th>
+            <th>GD</th>
+            <th>Pts</th>
+        </tr>
+    </thead>
+    <tbody id="standingsBody">
+        <tr>
+            <td colspan="11" style="text-align:center;color:#64748b;padding:24px;">Loading season table…</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="season-table-footer" id="tableFooter">
+    {% if weeks %}
+    Showing {{ weeks|length }} gameweek{{ weeks|length != 1 and 's' or '' }} for {{ selected_season }}.
+    {% else %}
+    No match data available for this season.
+    {% endif %}
+</div>
+
+<script>
+    const weeks = {{ weeks | tojson | safe }};
+    const weekTables = {{ week_tables | tojson | safe }};
+    const maxWeek = weeks.length;
+    let currentWeek = Number({{ selected_week or 1 }});
+    const weekLabel = document.getElementById('weekLabel');
+    const weekDate = document.getElementById('weekDate');
+    const weekSelect = document.getElementById('weekSelect');
+    const standingsBody = document.getElementById('standingsBody');
+    const prevBtn = document.getElementById('prevWeekBtn');
+    const nextBtn = document.getElementById('nextWeekBtn');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const weekInput = document.getElementById('weekInput');
+    let playInterval = null;
+
+    function updateButtons() {
+        prevBtn.disabled = currentWeek <= 1;
+        nextBtn.disabled = currentWeek >= maxWeek;
+        playBtn.disabled = maxWeek === 0 || currentWeek >= maxWeek;
+        pauseBtn.disabled = playInterval === null;
+        weekSelect.disabled = maxWeek === 0;
+    }
+
+    function renderWeek(weekNumber) {
+        const activeWeek = weekTables.find(w => w.week === weekNumber);
+        const standings = (activeWeek && activeWeek.standings) || [];
+
+        weekLabel.textContent = `GW ${weekNumber}`;
+        weekDate.textContent = activeWeek ? activeWeek.match_date : '';
+        weekInput.value = weekNumber;
+        weekSelect.value = weekNumber;
+
+        standingsBody.innerHTML = '';
+
+        if (!standings.length) {
+            standingsBody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px;">No standings available for this gameweek.</td></tr>';
+            return;
+        }
+
+        standings.forEach(team => {
+            const row = document.createElement('tr');
+            if (team.movement === 'up') row.classList.add('row-up');
+            if (team.movement === 'down') row.classList.add('row-down');
+
+            row.innerHTML = `
+                <td style="text-align:center; font-weight:700;">${team.position}</td>
+                <td class="pos-change">
+                    ${team.movement === 'up' ? '▲' + team.movement_delta : team.movement === 'down' ? '▼' + team.movement_delta : ''}
+                </td>
+                <td>
+                    <div class="match-team-cell" style="justify-content:flex-start;gap:10px;"> 
+                        <img src="${team.team_logo}" class="mini-logo" style="width:24px;height:24px;"> 
+                        <span>${team.team_name}</span>
+                    </div>
+                </td>
+                <td style="text-align:center">${team.played}</td>
+                <td style="text-align:center">${team.wins}</td>
+                <td style="text-align:center">${team.draws}</td>
+                <td style="text-align:center">${team.losses}</td>
+                <td style="text-align:center">${team.gf}</td>
+                <td style="text-align:center">${team.ga}</td>
+                <td style="text-align:center; color:${team.gd > 0 ? '#22c55e' : team.gd < 0 ? '#ef4444' : '#94a3b8'};">
+                    ${team.gd > 0 ? '+' : ''}${team.gd}
+                </td>
+                <td style="text-align:center; color:#60a5fa; font-weight:800;">${team.pts}</td>
+            `;
+            standingsBody.appendChild(row);
+        });
+    }
+
+    function setWeek(weekNumber) {
+        if (maxWeek === 0) return;
+        currentWeek = Math.min(Math.max(weekNumber, 1), maxWeek);
+        updateButtons();
+        renderWeek(currentWeek);
+    }
+
+    function play() {
+        if (playInterval || maxWeek === 0) return;
+        playBtn.disabled = true;
+        pauseBtn.disabled = false;
+        playInterval = setInterval(() => {
+            if (currentWeek >= maxWeek) {
+                pause();
+                return;
+            }
+            setWeek(currentWeek + 1);
+        }, 1200);
+    }
+
+    function pause() {
+        if (playInterval) {
+            clearInterval(playInterval);
+            playInterval = null;
+        }
+        updateButtons();
+    }
+
+    prevBtn.addEventListener('click', () => setWeek(currentWeek - 1));
+    nextBtn.addEventListener('click', () => setWeek(currentWeek + 1));
+    weekSelect.addEventListener('change', () => setWeek(parseInt(weekSelect.value, 10)));
+    playBtn.addEventListener('click', play);
+    pauseBtn.addEventListener('click', pause);
+
+    setWeek(currentWeek);
+</script>
+
+{% endblock %}
