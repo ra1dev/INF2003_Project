@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-heading-row">
+    <div>
+        <h1>Event Document Explorer</h1>
+        <p class="page-subtitle">Search individual football actions inside the nested <strong>match_events.events</strong> array in MongoDB.</p>
+    </div>
+    <a href="/nosql-insights" class="reset-btn">Open Event Analytics</a>
+</div>
+
+<div class="notice-box">
+    This page is a MongoDB document explorer, not a relational match summary. Each result row is one nested event from a match document. Coverage is currently limited to the 2015/16 StatsBomb event dataset.
+</div>
+
+{% if error_message %}
+    <p class="empty-state">{{ error_message }}</p>
+{% else %}
+
+<section class="nosql-explainer-grid">
+    <div class="nosql-explainer-card">
+        <h2>What You Are Searching</h2>
+        <p>Each match document contains an <strong>events</strong> array with passes, shots, pressure, fouls, substitutions, carries, and other actions.</p>
+    </div>
+    <div class="nosql-explainer-card">
+        <h2>Why NoSQL</h2>
+        <p>Events have different nested structures: passes have recipients and end locations, shots have xG and outcomes, fouls may have card details.</p>
+    </div>
+    <div class="nosql-explainer-card">
+        <h2>Query Focus</h2>
+        <p>Filters query nested MongoDB fields such as event type, team, player, period, minute, and key-moment criteria.</p>
+    </div>
+</section>
+
+<form method="GET" class="event-search-filter">
+    <div class="event-filter-primary">
+    <div class="filter-field filter-field-match">
+        <label for="match_id">Match</label>
+        <select name="match_id" id="match_id">
+            <option value="">All Matches</option>
+            {% for match in matches %}
+            <option value="{{ match.app_match_id }}" {% if filters.match_id == match.app_match_id %}selected{% endif %}>
+                #{{ match.app_match_id }} - {{ match.home_team }} vs {{ match.away_team }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="team">Team</label>
+        <select name="team" id="team">
+            <option value="">All Teams</option>
+            {% for team in teams %}
+            <option value="{{ team }}" {% if filters.team == team %}selected{% endif %}>{{ team }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="event_type">Event Type</label>
+        <select name="event_type" id="event_type">
+            <option value="">All Events</option>
+            {% for event_type in event_types %}
+            <option value="{{ event_type }}" {% if filters.event_type == event_type %}selected{% endif %}>{{ event_type }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="player">Player</label>
+        <input type="search"
+               name="player"
+               id="player"
+               list="player_options"
+               placeholder="Choose or type player"
+               value="{{ filters.player }}"
+               autocomplete="off">
+        <datalist id="player_options">
+            {% for player in players %}
+            <option value="{{ player }}"></option>
+            {% endfor %}
+        </datalist>
+    </div>
+    </div>
+
+    <div class="event-filter-secondary">
+    <div class="filter-field">
+        <label for="period">Match Half</label>
+        <select name="period" id="period">
+            <option value="">Full Match</option>
+            <option value="1" {% if filters.period == 1 %}selected{% endif %}>First Half</option>
+            <option value="2" {% if filters.period == 2 %}selected{% endif %}>Second Half</option>
+        </select>
+    </div>
+
+    <div class="filter-field minute-range-field">
+        <label>Minute Range</label>
+        <div class="minute-range-control">
+            <input type="number"
+                   min="0"
+                   max="101"
+                   name="minute_from"
+                   id="minute_from"
+                   placeholder="Start"
+                   value="{{ filters.minute_from if filters.minute_from is not none else '' }}">
+            <span>to</span>
+            <input type="number"
+                   min="0"
+                   max="101"
+                   name="minute_to"
+                   id="minute_to"
+                   placeholder="End"
+                   value="{{ filters.minute_to if filters.minute_to is not none else '' }}">
+        </div>
+        <div class="filter-hint">Use match minutes from 0 to 101.</div>
+    </div>
+
+    <label class="checkbox-filter">
+        <input type="checkbox" name="key_moments_only" value="1" {% if filters.key_moments_only %}checked{% endif %}>
+        Key moments only
+    </label>
+
+    <div class="comparison-actions">
+        <button type="submit">Search</button>
+        <a href="/event-search" class="reset-btn">Reset</a>
+    </div>
+    </div>
+</form>
+
+<div class="result-summary">
+    Showing {{ events|length }} nested event records{% if has_more_results %}; more MongoDB events match these filters{% endif %}. Results are limited to {{ result_limit }} rows for usability.
+</div>
+
+{% if events %}
+<table class="match-events-table event-search-table">
+    <thead>
+        <tr>
+            <th>Match</th>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in events %}
+        <tr>
+            <td>
+                <a href="{{ url_for('match_detail', match_id=event.match_id) }}">
+                    #{{ event.match_id }}
+                </a>
+                <div class="event-details">{{ event.home_team }} vs {{ event.away_team }}</div>
+            </td>
+            <td>{{ event.timestamp }}</td>
+            <td>{{ event.type_name }}</td>
+            <td>{{ event.player_name }}</td>
+            <td>{{ event.team_name }}</td>
+            <td>
+                <div>{{ event.description }}</div>
+                {% if event.details %}
+                    <div class="event-details">{{ event.details }}</div>
+                {% endif %}
+                {% if event.location_label %}
+                    <span class="event-meta">{{ event.location_label }}</span>
+                {% endif %}
+                {% if event.outcome %}
+                    <span class="event-meta">Outcome: {{ event.outcome }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No MongoDB events matched the selected filters.</p>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

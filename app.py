@@ -1,3 +1,6 @@
+import re
+from datetime import datetime
+
 from flask import Flask, render_template, request, url_for
 from psycopg2.extras import RealDictCursor
 from Backend.db_conn import get_db, init_app
@@ -15,6 +18,8 @@ init_app(app)
 
 app.register_blueprint(insights_bp)
 app.register_blueprint(players_bp)
+
+NOSQL_INDEXES_READY = False
 
 PLAYER_STAT_FIELDS = [
     "appearances",
@@ -1158,6 +1163,99 @@ def find_match_events_document(mongo_db, match):
     return None
 
 
+def ensure_nosql_indexes(mongo_db):
+    """Create idempotent indexes used by the NoSQL dashboard and event search."""
+    global NOSQL_INDEXES_READY
+    if NOSQL_INDEXES_READY:
+        return
+
+    mongo_db.match_events.create_index("app_match_id", name="idx_match_events_app_match_id")
+    mongo_db.match_events.create_index("season", name="idx_match_events_season")
+    mongo_db.match_events.create_index("home_team", name="idx_match_events_home_team")
+    mongo_db.match_events.create_index("away_team", name="idx_match_events_away_team")
+    mongo_db.match_events.create_index("events.type.name", name="idx_match_events_event_type")
+    mongo_db.match_events.create_index("events.player.name", name="idx_match_events_player_name")
+    mongo_db.match_events.create_index("events.team.name", name="idx_match_events_team_name")
+    mongo_db.match_events.create_index("events.minute", name="idx_match_events_minute")
+    mongo_db.match_events.create_index("events.period", name="idx_match_events_period")
+    mongo_db.player_match_performance.create_index("app_match_id", name="idx_player_perf_app_match_id")
+    mongo_db.player_match_performance.create_index("player_name", name="idx_player_perf_player_name")
+    mongo_db.player_match_performance.create_index("team_name", name="idx_player_perf_team_name")
+
+    NOSQL_INDEXES_READY = True
+
+
+def nosql_number(value, decimals=2):
+    if value is None:
+        return None
+    return round(float(value), decimals)
+
+
+def nosql_event_options(mongo_db):
+    event_types = sorted(
+        event_type
+        for event_type in mongo_db.match_events.distinct("events.type.name")
+        if event_type
+    )
+    teams = sorted({
+        team
+        for doc in mongo_db.match_events.find({}, {"home_team": 1, "away_team": 1})
+        for team in (doc.get("home_team"), doc.get("away_team"))
+        if team
+    })
+    matches = list(mongo_db.match_events.find(
+        {},
+        {"app_match_id": 1, "home_team": 1, "away_team": 1, "season": 1}
+    ).sort("app_match_id", 1))
+    players = sorted(
+        player_name
+        for player_name in mongo_db.match_events.distinct("events.player.name")
+        if player_name
+    )
+
+    return event_types, teams, matches, players
+
+
+def build_event_match_conditions(filters, field_prefix="events"):
+    event_conditions = []
+
+    if filters["team"]:
+        event_conditions.append({f"{field_prefix}.team.name": filters["team"]})
+
+    if filters["player"]:
+        event_conditions.append({
+            f"{field_prefix}.player.name": {
+                "$regex": re.escape(filters["player"]),
+                "$options": "i",
+            }
+        })
+
+    if filters["event_type"]:
+        event_conditions.append({f"{field_prefix}.type.name": filters["event_type"]})
+
+    if filters["period"]:
+        event_conditions.append({f"{field_prefix}.period": int(filters["period"])})
+
+    minute_condition = {}
+    if filters["minute_from"] is not None:
+        minute_condition["$gte"] = filters["minute_from"]
+    if filters["minute_to"] is not None:
+        minute_condition["$lte"] = filters["minute_to"]
+    if minute_condition:
+        event_conditions.append({f"{field_prefix}.minute": minute_condition})
+
+    if filters["key_moments_only"]:
+        event_conditions.append({
+            "$or": [
+                {f"{field_prefix}.type.name": {"$in": ["Shot", "Substitution", "Own Goal For", "Own Goal Against"]}},
+                {f"{field_prefix}.shot.outcome.name": {"$in": ["Goal", "Saved", "Blocked", "Off T", "Post"]}},
+                {f"{field_prefix}.foul_committed.card.name": {"$exists": True}},
+            ]
+        })
+
+    return event_conditions
+
+
 @app.route("/")
 def home():
     return render_template("index.html", title="Home")
@@ -1168,13 +1266,411 @@ def tables():
     return render_template("tables.html", title="Database Tables")
 
 
+@app.route("/nosql-insights")
+def nosql_insights():
+    error_message = None
+    coverage = {}
+    event_type_distribution = []
+    top_players = []
+    top_passers = []
+    top_shooters = []
+    team_activity = []
+    defensive_activity = []
+    discipline_summary = []
+    cached_at = None
+
+    try:
+        mongo_db = get_mongo_db()
+        ensure_nosql_indexes(mongo_db)
+
+        cache_collection = mongo_db["nosql_dashboard_cache"]
+        if request.args.get("refresh") != "1":
+            cache_doc = cache_collection.find_one({"_id": "nosql_insights_v1"})
+            if cache_doc and cache_doc.get("payload"):
+                payload = cache_doc["payload"]
+                return render_template(
+                    "nosql_insights.html",
+                    title="Event Analytics Dashboard",
+                    error_message=error_message,
+                    coverage=payload.get("coverage", {}),
+                    event_type_distribution=payload.get("event_type_distribution", []),
+                    top_players=payload.get("top_players", []),
+                    top_passers=payload.get("top_passers", []),
+                    top_shooters=payload.get("top_shooters", []),
+                    team_activity=payload.get("team_activity", []),
+                    defensive_activity=payload.get("defensive_activity", []),
+                    discipline_summary=payload.get("discipline_summary", []),
+                    cached_at=payload.get("cached_at"),
+                )
+
+        event_count_row = next(mongo_db.match_events.aggregate([
+            {"$project": {"event_count": {"$size": {"$ifNull": ["$events", []]}}}},
+            {"$group": {"_id": None, "total_events": {"$sum": "$event_count"}}},
+        ]), {"total_events": 0})
+
+        coverage = {
+            "matches": mongo_db.match_events.count_documents({}),
+            "player_documents": mongo_db.player_match_performance.count_documents({}),
+            "events": event_count_row["total_events"],
+            "seasons": ", ".join(sorted(mongo_db.match_events.distinct("season"))) or "N/A",
+        }
+
+        event_facets = next(mongo_db.match_events.aggregate([
+            {"$unwind": "$events"},
+            {"$facet": {
+                "event_type_distribution": [
+                    {"$group": {"_id": "$events.type.name", "event_count": {"$sum": 1}}},
+                    {"$match": {"_id": {"$ne": None}}},
+                    {"$sort": {"event_count": -1}},
+                    {"$limit": 12},
+                    {"$project": {"_id": 0, "event_type": "$_id", "event_count": 1}},
+                ],
+                "defensive_activity": [
+                    {"$match": {
+                        "events.type.name": {
+                            "$in": ["Pressure", "Duel", "Interception", "Clearance", "Block"]
+                        }
+                    }},
+                    {"$group": {
+                        "_id": {
+                            "team_name": "$events.team.name",
+                            "event_type": "$events.type.name",
+                        },
+                        "event_count": {"$sum": 1},
+                    }},
+                    {"$group": {
+                        "_id": "$_id.team_name",
+                        "total_defensive_events": {"$sum": "$event_count"},
+                        "breakdown": {
+                            "$push": {
+                                "event_type": "$_id.event_type",
+                                "event_count": "$event_count",
+                            }
+                        },
+                    }},
+                    {"$match": {"_id": {"$ne": None}}},
+                    {"$sort": {"total_defensive_events": -1}},
+                    {"$limit": 10},
+                    {"$project": {
+                        "_id": 0,
+                        "team_name": "$_id",
+                        "total_defensive_events": 1,
+                        "breakdown": 1,
+                    }},
+                ],
+                "discipline_summary": [
+                    {"$match": {"events.type.name": "Foul Committed"}},
+                    {"$group": {
+                        "_id": "$events.team.name",
+                        "fouls": {"$sum": 1},
+                        "cards": {
+                            "$sum": {
+                                "$cond": [
+                                    {"$ifNull": ["$events.foul_committed.card.name", False]},
+                                    1,
+                                    0,
+                                ]
+                            }
+                        },
+                        "yellow_cards": {
+                            "$sum": {
+                                "$cond": [
+                                    {"$eq": ["$events.foul_committed.card.name", "Yellow Card"]},
+                                    1,
+                                    0,
+                                ]
+                            }
+                        },
+                        "red_cards": {
+                            "$sum": {
+                                "$cond": [
+                                    {"$in": ["$events.foul_committed.card.name", ["Red Card", "Second Yellow"]]},
+                                    1,
+                                    0,
+                                ]
+                            }
+                        },
+                    }},
+                    {"$match": {"_id": {"$ne": None}}},
+                    {"$sort": {"cards": -1, "fouls": -1}},
+                    {"$limit": 10},
+                    {"$project": {
+                        "_id": 0,
+                        "team_name": "$_id",
+                        "fouls": 1,
+                        "cards": 1,
+                        "yellow_cards": 1,
+                        "red_cards": 1,
+                    }},
+                ],
+            }},
+        ]), {})
+
+        event_type_distribution = event_facets.get("event_type_distribution", [])
+        defensive_activity = event_facets.get("defensive_activity", [])
+        discipline_summary = event_facets.get("discipline_summary", [])
+
+        top_players = list(mongo_db.player_match_performance.aggregate([
+            {"$group": {
+                "_id": "$player_name",
+                "team_name": {"$first": "$team_name"},
+                "matches": {"$sum": 1},
+                "touches": {"$sum": "$statistics.touches"},
+                "passes": {"$sum": "$statistics.passes"},
+                "shots": {"$sum": "$statistics.shots"},
+                "xg": {"$sum": "$statistics.xg"},
+            }},
+            {"$sort": {"touches": -1, "passes": -1}},
+            {"$limit": 10},
+            {"$project": {
+                "_id": 0,
+                "player_name": "$_id",
+                "team_name": 1,
+                "matches": 1,
+                "touches": 1,
+                "passes": 1,
+                "shots": 1,
+                "xg": {"$round": ["$xg", 2]},
+            }},
+        ]))
+
+        top_passers = list(mongo_db.player_match_performance.aggregate([
+            {"$group": {
+                "_id": "$player_name",
+                "team_name": {"$first": "$team_name"},
+                "matches": {"$sum": 1},
+                "passes": {"$sum": "$statistics.passes"},
+                "passes_completed": {"$sum": "$statistics.passes_completed"},
+            }},
+            {"$match": {"passes": {"$gte": 100}}},
+            {"$addFields": {
+                "pass_accuracy_pct": {
+                    "$round": [
+                        {"$multiply": [{"$divide": ["$passes_completed", "$passes"]}, 100]},
+                        2,
+                    ]
+                }
+            }},
+            {"$sort": {"passes": -1, "pass_accuracy_pct": -1}},
+            {"$limit": 10},
+            {"$project": {
+                "_id": 0,
+                "player_name": "$_id",
+                "team_name": 1,
+                "matches": 1,
+                "passes": 1,
+                "passes_completed": 1,
+                "pass_accuracy_pct": 1,
+            }},
+        ]))
+
+        top_shooters = list(mongo_db.player_match_performance.aggregate([
+            {"$group": {
+                "_id": "$player_name",
+                "team_name": {"$first": "$team_name"},
+                "matches": {"$sum": 1},
+                "shots": {"$sum": "$statistics.shots"},
+                "shots_on_target": {"$sum": "$statistics.shots_on_target"},
+                "xg": {"$sum": "$statistics.xg"},
+            }},
+            {"$match": {"shots": {"$gt": 0}}},
+            {"$addFields": {
+                "shot_accuracy_pct": {
+                    "$round": [
+                        {"$multiply": [{"$divide": ["$shots_on_target", "$shots"]}, 100]},
+                        2,
+                    ]
+                }
+            }},
+            {"$sort": {"xg": -1, "shots": -1}},
+            {"$limit": 10},
+            {"$project": {
+                "_id": 0,
+                "player_name": "$_id",
+                "team_name": 1,
+                "matches": 1,
+                "shots": 1,
+                "shots_on_target": 1,
+                "shot_accuracy_pct": 1,
+                "xg": {"$round": ["$xg", 2]},
+            }},
+        ]))
+
+        team_activity = list(mongo_db.player_match_performance.aggregate([
+            {"$group": {
+                "_id": "$team_name",
+                "player_match_docs": {"$sum": 1},
+                "touches": {"$sum": "$statistics.touches"},
+                "passes": {"$sum": "$statistics.passes"},
+                "shots": {"$sum": "$statistics.shots"},
+                "fouls": {"$sum": "$statistics.fouls"},
+                "tackles": {"$sum": "$statistics.tackles"},
+                "interceptions": {"$sum": "$statistics.interceptions"},
+                "xg": {"$sum": "$statistics.xg"},
+            }},
+            {"$sort": {"touches": -1}},
+            {"$limit": 12},
+            {"$project": {
+                "_id": 0,
+                "team_name": "$_id",
+                "player_match_docs": 1,
+                "touches": 1,
+                "passes": 1,
+                "shots": 1,
+                "fouls": 1,
+                "tackles": 1,
+                "interceptions": 1,
+                "xg": {"$round": ["$xg", 2]},
+            }},
+        ]))
+
+        cached_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cache_collection.update_one(
+            {"_id": "nosql_insights_v1"},
+            {"$set": {
+                "payload": {
+                    "coverage": coverage,
+                    "event_type_distribution": event_type_distribution,
+                    "top_players": top_players,
+                    "top_passers": top_passers,
+                    "top_shooters": top_shooters,
+                    "team_activity": team_activity,
+                    "defensive_activity": defensive_activity,
+                    "discipline_summary": discipline_summary,
+                    "cached_at": cached_at,
+                },
+                "updated_at": cached_at,
+            }},
+            upsert=True,
+        )
+
+    except Exception as exc:
+        error_message = f"MongoDB data is unavailable: {exc}"
+
+    return render_template(
+        "nosql_insights.html",
+        title="Event Analytics Dashboard",
+        error_message=error_message,
+        coverage=coverage,
+        event_type_distribution=event_type_distribution,
+        top_players=top_players,
+        top_passers=top_passers,
+        top_shooters=top_shooters,
+        team_activity=team_activity,
+        defensive_activity=defensive_activity,
+        discipline_summary=discipline_summary,
+        cached_at=cached_at,
+    )
+
+
+@app.route("/event-search")
+def event_search():
+    def parse_int(value):
+        if value in (None, ""):
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
+    minute_from = parse_int(request.args.get("minute_from"))
+    minute_to = parse_int(request.args.get("minute_to"))
+    if minute_from is not None:
+        minute_from = max(0, min(minute_from, 101))
+    if minute_to is not None:
+        minute_to = max(0, min(minute_to, 101))
+    if minute_from is not None and minute_to is not None and minute_from > minute_to:
+        minute_from, minute_to = minute_to, minute_from
+
+    filters = {
+        "team": request.args.get("team") or "",
+        "player": request.args.get("player") or "",
+        "event_type": request.args.get("event_type") or "",
+        "match_id": parse_int(request.args.get("match_id")),
+        "period": parse_int(request.args.get("period")),
+        "minute_from": minute_from,
+        "minute_to": minute_to,
+        "key_moments_only": request.args.get("key_moments_only") == "1",
+    }
+
+    error_message = None
+    event_types = []
+    teams = []
+    matches = []
+    players = []
+    events = []
+    result_limit = 100
+    has_more_results = False
+
+    try:
+        mongo_db = get_mongo_db()
+        ensure_nosql_indexes(mongo_db)
+        event_types, teams, matches, players = nosql_event_options(mongo_db)
+
+        pipeline = []
+        if filters["match_id"] is not None:
+            pipeline.append({"$match": {"app_match_id": filters["match_id"]}})
+
+        pre_unwind_conditions = build_event_match_conditions(filters)
+        if pre_unwind_conditions:
+            pipeline.append({"$match": {"$and": pre_unwind_conditions}})
+
+        pipeline.extend([
+            {"$sort": {"app_match_id": 1}},
+            {"$unwind": "$events"},
+        ])
+
+        event_conditions = build_event_match_conditions(filters)
+        if event_conditions:
+            pipeline.append({"$match": {"$and": event_conditions}})
+
+        pipeline.extend([
+            {"$limit": result_limit + 1},
+            {"$project": {
+                "_id": 0,
+                "app_match_id": 1,
+                "season": 1,
+                "home_team": 1,
+                "away_team": 1,
+                "event": "$events",
+            }},
+        ])
+
+        for row in mongo_db.match_events.aggregate(pipeline):
+            if len(events) >= result_limit:
+                has_more_results = True
+                break
+            formatted_event = format_statsbomb_event(row["event"])
+            formatted_event.update({
+                "match_id": row.get("app_match_id"),
+                "season": row.get("season"),
+                "home_team": row.get("home_team"),
+                "away_team": row.get("away_team"),
+            })
+            events.append(formatted_event)
+    except Exception as exc:
+        error_message = f"MongoDB event search is unavailable: {exc}"
+
+    return render_template(
+        "event_search.html",
+        title="Event Document Explorer",
+        error_message=error_message,
+        event_types=event_types,
+        teams=teams,
+        matches=matches,
+        players=players,
+        filters=filters,
+        events=events,
+        result_limit=result_limit,
+        has_more_results=has_more_results,
+    )
+
+
 @app.route("/player-comparison")
 def player_comparison():
     selected_season = request.args.get("season") or "all"
     comparison_basis = request.args.get("basis") or "available"
     selected_position = request.args.get("position") or ""
-    selected_team = request.args.get("team") or ""
-    player_search = request.args.get("search") or ""
     player_a_id = request.args.get("player_a", type=int)
     player_b_id = request.args.get("player_b", type=int)
 
@@ -1190,32 +1686,12 @@ def player_comparison():
     cur.execute("SELECT position_name FROM position ORDER BY position_name;")
     positions = cur.fetchall()
 
-    cur.execute("SELECT team_name FROM team ORDER BY team_name;")
-    teams = cur.fetchall()
-
     player_filter_clauses = ["EXISTS (SELECT 1 FROM player_season_stats pss WHERE pss.player_id = p.player_id)"]
     player_filter_params = []
-
-    if player_search:
-        player_filter_clauses.append("p.player_name ILIKE %s")
-        player_filter_params.append(f"%{player_search}%")
 
     if selected_position:
         player_filter_clauses.append("lp.position_name = %s")
         player_filter_params.append(selected_position)
-
-    if selected_team:
-        player_filter_clauses.append("""
-            EXISTS (
-                SELECT 1
-                FROM player_team_season pts_filter
-                INNER JOIN team t_filter
-                    ON pts_filter.team_id = t_filter.team_id
-                WHERE pts_filter.player_id = p.player_id
-                  AND t_filter.team_name = %s
-            )
-        """)
-        player_filter_params.append(selected_team)
 
     player_filter_sql = " AND ".join(player_filter_clauses)
     selected_a_for_filter = player_a_id or 0
@@ -1259,6 +1735,29 @@ def player_comparison():
         ORDER BY p.player_name;
     """, player_filter_params + [selected_a_for_filter, selected_b_for_filter])
     player_options = cur.fetchall()
+    player_selector_options = []
+    for player in player_options:
+        club_names = player["club_names"] or "Unknown Team"
+        player_selector_options.append({
+            "player_id": player["player_id"],
+            "display_label": f"{player['player_name']} - {player['position_name']} - {club_names}",
+        })
+    selected_player_a_label = next(
+        (
+            player["display_label"]
+            for player in player_selector_options
+            if player["player_id"] == player_a_id
+        ),
+        "",
+    )
+    selected_player_b_label = next(
+        (
+            player["display_label"]
+            for player in player_selector_options
+            if player["player_id"] == player_b_id
+        ),
+        "",
+    )
 
     error_message = None
     season_count_warning = None
@@ -1586,13 +2085,13 @@ def player_comparison():
         title="Player Comparison",
         seasons=seasons,
         positions=positions,
-        teams=teams,
         player_options=player_options,
+        player_selector_options=player_selector_options,
         selected_season=selected_season,
         comparison_basis=comparison_basis,
         selected_position=selected_position,
-        selected_team=selected_team,
-        player_search=player_search,
+        selected_player_a_label=selected_player_a_label,
+        selected_player_b_label=selected_player_b_label,
         selected_player_a=player_a_id,
         selected_player_b=player_b_id,
         is_all_time=is_all_time,
@@ -1679,6 +2178,29 @@ def team_comparison():
         ORDER BY team_name;
     """)
     teams = cur.fetchall()
+    team_selector_options = [
+        {
+            "team_id": team["team_id"],
+            "display_label": team["team_name"],
+        }
+        for team in teams
+    ]
+    selected_team_a_label = next(
+        (
+            team["display_label"]
+            for team in team_selector_options
+            if team["team_id"] == team_a_id
+        ),
+        ""
+    )
+    selected_team_b_label = next(
+        (
+            team["display_label"]
+            for team in team_selector_options
+            if team["team_id"] == team_b_id
+        ),
+        ""
+    )
 
     error_message = None
     comparison_sections = []
@@ -1937,10 +2459,13 @@ def team_comparison():
         title="Team Comparison",
         seasons=seasons,
         teams=teams,
+        team_selector_options=team_selector_options,
         selected_season=selected_season,
         comparison_basis=comparison_basis,
         selected_team_a=team_a_id,
         selected_team_b=team_b_id,
+        selected_team_a_label=selected_team_a_label,
+        selected_team_b_label=selected_team_b_label,
         is_all_time=is_all_time,
         error_message=error_message,
         season_count_warning=season_count_warning,
