@@ -1,6 +1,5 @@
 from psycopg2.extras import RealDictCursor
 
-
 PLAYER_STAT_FIELDS = [
     "appearances",
     "clean_sheets",
