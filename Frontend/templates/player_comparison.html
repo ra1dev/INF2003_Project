@@ -28,6 +28,10 @@
                 Common Seasons Only
             </option>
         </select>
+        <div class="filter-hint">
+            All Available Seasons compares each selected player across all data available for it.
+            Common Seasons Only compares only seasons where both selected players have data.
+        </div>
     </div>
 
     <div class="filter-field">
@@ -43,52 +47,40 @@
         </select>
     </div>
 
-    <div class="filter-field">
-        <label for="team">Club Filter</label>
-        <select id="team" name="team">
-            <option value="">All Clubs</option>
-            {% for team in teams %}
-            <option value="{{ team.team_name }}"
-                    {% if selected_team == team.team_name %}selected{% endif %}>
-                {{ team.team_name }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div class="filter-field">
-        <label for="search">Player Search</label>
-        <input id="search"
-               name="search"
+    <div class="filter-field searchable-player-field">
+        <label for="player_a_search">Player A</label>
+        <input id="player_a_search"
+               class="player-combobox-input"
                type="search"
-               placeholder="Search player"
-               value="{{ player_search }}">
+               list="player_a_options"
+               placeholder="Type to search player"
+               value="{{ selected_player_a_label }}"
+               autocomplete="off"
+               required>
+        <input id="player_a" name="player_a" type="hidden" value="{{ selected_player_a or '' }}">
+        <datalist id="player_a_options">
+            {% for player in player_selector_options %}
+            <option value="{{ player.display_label }}"></option>
+            {% endfor %}
+        </datalist>
     </div>
 
-    <div class="filter-field">
-        <label for="player_a">Player A</label>
-        <select id="player_a" name="player_a" required>
-            <option value="">Choose player</option>
-            {% for player in player_options %}
-            <option value="{{ player.player_id }}"
-                    {% if selected_player_a == player.player_id %}selected{% endif %}>
-                {{ player.player_name }} · {{ player.position_name }}
-            </option>
+    <div class="filter-field searchable-player-field">
+        <label for="player_b_search">Player B</label>
+        <input id="player_b_search"
+               class="player-combobox-input"
+               type="search"
+               list="player_b_options"
+               placeholder="Type to search player"
+               value="{{ selected_player_b_label }}"
+               autocomplete="off"
+               required>
+        <input id="player_b" name="player_b" type="hidden" value="{{ selected_player_b or '' }}">
+        <datalist id="player_b_options">
+            {% for player in player_selector_options %}
+            <option value="{{ player.display_label }}"></option>
             {% endfor %}
-        </select>
-    </div>
-
-    <div class="filter-field">
-        <label for="player_b">Player B</label>
-        <select id="player_b" name="player_b" required>
-            <option value="">Choose player</option>
-            {% for player in player_options %}
-            <option value="{{ player.player_id }}"
-                    {% if selected_player_b == player.player_id %}selected{% endif %}>
-                {{ player.player_name }} · {{ player.position_name }}
-            </option>
-            {% endfor %}
-        </select>
+        </datalist>
     </div>
 
     <div class="comparison-actions">
@@ -124,7 +116,7 @@
 {% if not selected_player_a or not selected_player_b %}
 <div class="comparison-empty">
     <h2>Select two players to compare</h2>
-    <p>Use filters to narrow the selector, then compare players across one season or all seasons.</p>
+    <p>Type in each player field to narrow the dropdown, then compare players across one season or all seasons.</p>
 </div>
 {% endif %}
 
@@ -147,7 +139,7 @@
         <div>
             <span>Player A</span>
             <h2>{{ player_a.player_name }}</h2>
-            <p>{{ player_a.position_name }} · {{ player_a.appearances }} appearances</p>
+            <p>{{ player_a.position_name }} - {{ player_a.appearances }} appearances</p>
             <div class="club-badge-row">
                 {% for club in player_a.club_badges %}
                 <span class="club-badge">{{ club }}</span>
@@ -163,7 +155,7 @@
         <div>
             <span>Player B</span>
             <h2>{{ player_b.player_name }}</h2>
-            <p>{{ player_b.position_name }} · {{ player_b.appearances }} appearances</p>
+            <p>{{ player_b.position_name }} - {{ player_b.appearances }} appearances</p>
             <div class="club-badge-row">
                 {% for club in player_b.club_badges %}
                 <span class="club-badge">{{ club }}</span>
@@ -458,5 +450,36 @@
     });
 </script>
 {% endif %}
+
+<script>
+    (function () {
+        const playerOptions = {{ player_selector_options | tojson }};
+        const playerIdByLabel = new Map(playerOptions.map((player) => [
+            player.display_label,
+            String(player.player_id)
+        ]));
+
+        function bindPlayerCombobox(inputId, hiddenId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            if (!input || !hidden) {
+                return;
+            }
+
+            function syncHiddenValue() {
+                const selectedId = playerIdByLabel.get(input.value.trim()) || "";
+                hidden.value = selectedId;
+                input.setCustomValidity(selectedId ? "" : "Choose a player from the dropdown list.");
+            }
+
+            input.addEventListener("input", syncHiddenValue);
+            input.addEventListener("change", syncHiddenValue);
+            syncHiddenValue();
+        }
+
+        bindPlayerCombobox("player_a_search", "player_a");
+        bindPlayerCombobox("player_b_search", "player_b");
+    })();
+</script>
 
 {% endblock %}

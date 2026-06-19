@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-heading-row">
+    <div>
+        <h1>Event Analytics Dashboard</h1>
+        <p class="page-subtitle">Season-level MongoDB aggregations over nested StatsBomb event documents and denormalized player-match documents.</p>
+    </div>
+    <a href="/event-search" class="reset-btn">Open Event Explorer</a>
+</div>
+
+<div class="notice-box">
+    MongoDB is used here for detailed event-level data that does not fit neatly into the normalized PostgreSQL schema. Event coverage currently contains StatsBomb data for the 2015/16 season only.
+    {% if cached_at %}
+        <br>Dashboard cache generated at {{ cached_at }}.
+        <a href="/nosql-insights?refresh=1" class="inline-link">Refresh MongoDB aggregations</a>
+    {% endif %}
+</div>
+
+{% if error_message %}
+    <p class="empty-state">{{ error_message }}</p>
+{% else %}
+
+<section class="nosql-explainer-grid">
+    <div class="nosql-explainer-card">
+        <h2>Source Documents</h2>
+        <p><strong>match_events</strong> stores one match document with thousands of nested event records.</p>
+        <p><strong>player_match_performance</strong> stores one player-match document with statistics, heatmap, passing network, period breakdown, and actions.</p>
+    </div>
+    <div class="nosql-explainer-card">
+        <h2>MongoDB Role</h2>
+        <p>This page demonstrates aggregation over document data using nested event arrays and denormalized player-match documents.</p>
+        <p>PostgreSQL remains the source for normalized multi-season match, team, and player-season summaries.</p>
+    </div>
+    <div class="nosql-explainer-card">
+        <h2>Query Techniques</h2>
+        <p>Uses MongoDB aggregation stages such as <code>$unwind</code>, <code>$group</code>, <code>$sort</code>, and <code>$facet</code>.</p>
+        <p>Heavy dashboard results are cached in <strong>nosql_dashboard_cache</strong> for fast page loads.</p>
+    </div>
+</section>
+
+<div class="kpi-strip nosql-kpi-strip">
+    <div class="kpi-card">
+        <div class="kpi-label">MongoDB Matches</div>
+        <div class="kpi-value">{{ coverage.matches }}</div>
+        <div class="kpi-sub">{{ coverage.seasons }}</div>
+    </div>
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Event Documents</div>
+        <div class="kpi-value">{{ "{:,}".format(coverage.events) }}</div>
+        <div class="kpi-sub">Nested match events</div>
+    </div>
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Player-Match Docs</div>
+        <div class="kpi-value">{{ "{:,}".format(coverage.player_documents) }}</div>
+        <div class="kpi-sub">Denormalized player records</div>
+    </div>
+</div>
+
+<div class="comparison-tab-bar">
+    <button class="comparison-tab-btn active" onclick="openComparisonTab(event, 'nosql-overview')">Event Mix</button>
+    <button class="comparison-tab-btn" onclick="openComparisonTab(event, 'nosql-players')">Player Involvement</button>
+    <button class="comparison-tab-btn" onclick="openComparisonTab(event, 'nosql-teams')">Team Activity</button>
+    <button class="comparison-tab-btn" onclick="openComparisonTab(event, 'nosql-discipline')">Discipline</button>
+</div>
+
+<div id="nosql-overview" class="comparison-tab-pane active">
+    <div class="comparison-section-grid">
+        <section class="comparison-panel">
+            <h2>Event Type Distribution</h2>
+            <p class="panel-subtitle">Counts each nested event type inside <strong>match_events.events</strong> to show the shape of the raw document data.</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Event Type</th>
+                        <th>Events</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in event_type_distribution %}
+                    <tr>
+                        <td>{{ row.event_type }}</td>
+                        <td>{{ "{:,}".format(row.event_count) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="comparison-panel">
+            <h2>Top Shooters By xG</h2>
+            <p class="panel-subtitle">Aggregates player-match documents to find the players with the highest expected goals in the event dataset.</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Shots</th>
+                        <th>SOT</th>
+                        <th>xG</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in top_shooters %}
+                    <tr>
+                        <td>{{ row.player_name }}</td>
+                        <td>{{ row.team_name }}</td>
+                        <td>{{ row.shots }}</td>
+                        <td>{{ row.shots_on_target }}</td>
+                        <td>{{ row.xg }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div id="nosql-players" class="comparison-tab-pane">
+    <div class="comparison-section-grid">
+        <section class="comparison-panel">
+            <h2>Most Involved Players</h2>
+            <p class="panel-subtitle">Uses denormalized player-match documents to rank players by touches and passing involvement.</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Matches</th>
+                        <th>Touches</th>
+                        <th>Passes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in top_players %}
+                    <tr>
+                        <td>{{ row.player_name }}</td>
+                        <td>{{ row.team_name }}</td>
+                        <td>{{ row.matches }}</td>
+                        <td>{{ "{:,}".format(row.touches) }}</td>
+                        <td>{{ "{:,}".format(row.passes) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="comparison-panel">
+            <h2>Top Passers</h2>
+            <p class="panel-subtitle">Groups player-match documents by player to compare pass volume and pass completion.</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Passes</th>
+                        <th>Completed</th>
+                        <th>Accuracy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in top_passers %}
+                    <tr>
+                        <td>{{ row.player_name }}</td>
+                        <td>{{ row.team_name }}</td>
+                        <td>{{ "{:,}".format(row.passes) }}</td>
+                        <td>{{ "{:,}".format(row.passes_completed) }}</td>
+                        <td>{{ row.pass_accuracy_pct }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div id="nosql-teams" class="comparison-tab-pane">
+    <div class="comparison-section-grid">
+        <section class="comparison-panel">
+            <h2>Team Activity Summary</h2>
+            <p class="panel-subtitle">Aggregates player-match documents into team-level activity totals from event-derived statistics.</p>
+            <table class="comparison-table nosql-wide-table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Touches</th>
+                        <th>Passes</th>
+                        <th>Shots</th>
+                        <th>xG</th>
+                        <th>Tackles</th>
+                        <th>Interceptions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in team_activity %}
+                    <tr>
+                        <td>{{ row.team_name }}</td>
+                        <td>{{ "{:,}".format(row.touches) }}</td>
+                        <td>{{ "{:,}".format(row.passes) }}</td>
+                        <td>{{ row.shots }}</td>
+                        <td>{{ row.xg }}</td>
+                        <td>{{ row.tackles }}</td>
+                        <td>{{ row.interceptions }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="comparison-panel">
+            <h2>Pressure And Defensive Events</h2>
+            <p class="panel-subtitle">Unwinds nested event arrays and groups pressure, duel, interception, clearance, and block events by team.</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Total</th>
+                        <th>Breakdown</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in defensive_activity %}
+                    <tr>
+                        <td>{{ row.team_name }}</td>
+                        <td>{{ "{:,}".format(row.total_defensive_events) }}</td>
+                        <td>
+                            {% for item in row.breakdown %}
+                                <span class="club-badge">{{ item.event_type }}: {{ item.event_count }}</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div id="nosql-discipline" class="comparison-tab-pane">
+    <section class="comparison-panel">
+        <h2>Discipline From Event Documents</h2>
+        <p class="panel-subtitle">Reads foul and card details from nested event documents rather than the relational match summary.</p>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th>Fouls</th>
+                    <th>Cards</th>
+                    <th>Yellow Cards</th>
+                    <th>Red / Second Yellow</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in discipline_summary %}
+                <tr>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.fouls }}</td>
+                    <td>{{ row.cards }}</td>
+                    <td>{{ row.yellow_cards }}</td>
+                    <td>{{ row.red_cards }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<script>
+    function openComparisonTab(evt, tabId) {
+        document.querySelectorAll(".comparison-tab-pane").forEach((pane) => {
+            pane.classList.remove("active");
+        });
+        document.querySelectorAll(".comparison-tab-btn").forEach((button) => {
+            button.classList.remove("active");
+        });
+        document.getElementById(tabId).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+</script>
+
+{% endif %}
+
+{% endblock %}

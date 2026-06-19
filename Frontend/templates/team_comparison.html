@@ -30,32 +30,46 @@
                 Common Seasons Only
             </option>
         </select>
+        <div class="filter-hint">
+            All Available Seasons compares each selected team across all data available for it.
+            Common Seasons Only compares only seasons where both selected teams have data.
+        </div>
     </div>
 
-    <div class="filter-field">
-        <label for="team_a">Team A</label>
-        <select id="team_a" name="team_a" required>
-            <option value="">Choose team</option>
-            {% for team in teams %}
-            <option value="{{ team.team_id }}"
-                    {% if selected_team_a == team.team_id %}selected{% endif %}>
-                {{ team.team_name }}
-            </option>
+    <div class="filter-field searchable-team-field">
+        <label for="team_a_search">Team A</label>
+        <input id="team_a_search"
+               class="team-combobox-input"
+               type="search"
+               list="team_a_options"
+               placeholder="Type to search team"
+               value="{{ selected_team_a_label }}"
+               autocomplete="off"
+               required>
+        <input id="team_a" name="team_a" type="hidden" value="{{ selected_team_a or '' }}">
+        <datalist id="team_a_options">
+            {% for team in team_selector_options %}
+            <option value="{{ team.display_label }}"></option>
             {% endfor %}
-        </select>
+        </datalist>
     </div>
 
-    <div class="filter-field">
-        <label for="team_b">Team B</label>
-        <select id="team_b" name="team_b" required>
-            <option value="">Choose team</option>
-            {% for team in teams %}
-            <option value="{{ team.team_id }}"
-                    {% if selected_team_b == team.team_id %}selected{% endif %}>
-                {{ team.team_name }}
-            </option>
+    <div class="filter-field searchable-team-field">
+        <label for="team_b_search">Team B</label>
+        <input id="team_b_search"
+               class="team-combobox-input"
+               type="search"
+               list="team_b_options"
+               placeholder="Type to search team"
+               value="{{ selected_team_b_label }}"
+               autocomplete="off"
+               required>
+        <input id="team_b" name="team_b" type="hidden" value="{{ selected_team_b or '' }}">
+        <datalist id="team_b_options">
+            {% for team in team_selector_options %}
+            <option value="{{ team.display_label }}"></option>
             {% endfor %}
-        </select>
+        </datalist>
     </div>
 
     <div class="comparison-actions">
@@ -356,5 +370,33 @@
     });
 </script>
 {% endif %}
+
+<script>
+    (function () {
+        const teamOptions = {{ team_selector_options | tojson }};
+        const teamIdByLabel = new Map(teamOptions.map((team) => [
+            team.display_label,
+            String(team.team_id)
+        ]));
+
+        function bindTeamCombobox(inputId, hiddenId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+
+            function syncHiddenValue() {
+                const selectedId = teamIdByLabel.get(input.value.trim()) || "";
+                hidden.value = selectedId;
+                input.setCustomValidity(selectedId ? "" : "Choose a team from the dropdown list.");
+            }
+
+            input.addEventListener("input", syncHiddenValue);
+            input.addEventListener("change", syncHiddenValue);
+            syncHiddenValue();
+        }
+
+        bindTeamCombobox("team_a_search", "team_a");
+        bindTeamCombobox("team_b_search", "team_b");
+    })();
+</script>
 
 {% endblock %}
