@@ -148,7 +148,7 @@
         {% for event in events %}
         <tr>
             <td>
-                <a href="{{ url_for('match_detail', match_id=event.match_id) }}">
+                <a href="{{ url_for('matches.match_detail', match_id=event.match_id) }}">
                     #{{ event.match_id }}
                 </a>
                 <div class="event-details">{{ event.home_team }} vs {{ event.away_team }}</div>

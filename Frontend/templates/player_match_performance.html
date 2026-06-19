@@ -5,7 +5,7 @@
 {% if not player_perf %}
 <h1>Player Performance</h1>
 <p class="empty-state">{{ error or "Player performance data is unavailable for this match." }}</p>
-<p><a href="{{ url_for('match_detail', match_id=match.match_id) }}">Back to match details</a></p>
+<p><a href="{{ url_for('matches.match_detail', match_id=match.match_id) }}">Back to match details</a></p>
 {% else %}
 
 <h1>{{ player_perf.player_name }} - Player Performance</h1>
@@ -16,7 +16,7 @@
         <span>{{ player_perf.team_name }}</span>
     </div>
     <div class="player-perf-match">
-        <a href="{{ url_for('match_detail', match_id=match.match_id) }}">
+        <a href="{{ url_for('matches.match_detail', match_id=match.match_id) }}">
             {{ match.home_team }} vs {{ match.away_team }}
         </a>
         <span>{{ match.match_date }}</span>

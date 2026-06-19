@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request
 from Backend.db_conn import get_db
 from Backend.repositories.insights_repository import (
+    get_seasons,
     get_clinical_finishing,
     get_shot_accuracy,
     get_home_dominance,
@@ -9,19 +10,8 @@ from Backend.repositories.insights_repository import (
     get_pressure_without_payoff,
     get_defensive_resistance,
 )
-from psycopg2.extras import RealDictCursor
 
 insights_bp = Blueprint("insights", __name__)
-
-
-def get_seasons(conn):
-    with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute("""
-            SELECT season_id, season_name
-            FROM season
-            ORDER BY start_year DESC
-        """)
-        return cur.fetchall()
 
 
 @insights_bp.route("/insights")

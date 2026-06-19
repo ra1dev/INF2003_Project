@@ -6,6 +6,16 @@ def _run_query(conn, query, params=None):
         cur.execute(query, params or ())
         return cur.fetchall()
 
+
+def get_seasons(conn):
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+            SELECT season_id, season_name
+            FROM season
+            ORDER BY start_year DESC
+        """)
+        return cur.fetchall()
+
 #common table expression for the others to work on
 def get_team_season_summary(conn, season_id):
     query = """

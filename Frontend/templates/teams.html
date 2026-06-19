@@ -29,7 +29,7 @@
         {% for team in teams %}
 
         <tr class="clickable-row"
-            data-href="{{ url_for('team_detail', team_id=team.team_id) }}">
+            data-href="{{ url_for('teams.team_detail', team_id=team.team_id) }}">
 
             <td>{{ team.team_id }}</td>
 

@@ -30,7 +30,7 @@
             <td>
                 <div class="team-cell">
                     <img src="{{ row.team_logo }}" class="team-logo">
-                    <a href="{{ url_for('team_detail', team_id=row.team_id) }}">{{ row.team_name }}</a>
+                    <a href="{{ url_for('teams.team_detail', team_id=row.team_id) }}">{{ row.team_name }}</a>
                 </div>
             </td>
             <td>
@@ -85,7 +85,7 @@
                 <td>{{ event.type_name }}</td>
                 <td>
                     {% if event.player_id %}
-                    <a href="{{ url_for('player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
+                    <a href="{{ url_for('matches.player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
                     {% else %}
                     {{ event.player_name }}
                     {% endif %}
@@ -146,7 +146,7 @@
                 <td>{{ event.type_name }}</td>
                 <td>
                     {% if event.player_id %}
-                    <a href="{{ url_for('player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
+                    <a href="{{ url_for('matches.player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
                     {% else %}
                     {{ event.player_name }}
                     {% endif %}
