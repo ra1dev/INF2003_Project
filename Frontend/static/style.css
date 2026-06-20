@@ -776,12 +776,28 @@ td {
 
 /* Tabs */
 
+.insight-view-switch {
+  display: inline-flex; gap: 4px; margin-bottom: 18px; padding: 5px; background: #e8e1ea; border: 1px solid var(--border); border-radius: 11px;
+}
+
+.insight-view-link {
+  padding: 10px 18px; color: var(--muted); border-radius: 8px; font-size: 0.9rem; font-weight: 800; text-decoration: none; transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.insight-view-link:hover {
+  color: var(--pl-purple); background: rgba(255, 255, 255, 0.65);
+}
+
+.insight-view-link.active {
+  color: white; background: var(--pl-purple); box-shadow: 0 6px 16px rgba(55, 0, 60, 0.2);
+}
+
 .tab-bar {
-  display: flex; border-bottom: 2px solid #d8cfd9; margin-bottom: 16px;
+  display: flex; overflow-x: auto; border-bottom: 2px solid #d8cfd9; margin-bottom: 16px;
 }
 
 .tab-btn {
-  padding: 9px 18px; border: none; background: none; color: #6f6472; cursor: pointer; font-size: 0.88rem; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -2px;
+  flex: 0 0 auto; padding: 9px 18px; border: none; background: none; color: #6f6472; cursor: pointer; font-size: 0.88rem; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -2px;
 }
 
 .tab-btn:hover {
