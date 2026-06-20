@@ -288,8 +288,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     var comparisonTrendCharts = {{ trend_charts | tojson }};
-    var trendLabelColor = "#94a3b8";
-    var trendGridColor = "#334155";
+    var trendLabelColor = "#6f6472";
+    var trendGridColor = "#d8cfd9";
     var teamTrendChartInstances = [];
     window.teamTrendChartInstances = teamTrendChartInstances;
 
@@ -316,7 +316,7 @@
                         {
                             label: chart.team_a_name,
                             data: chart.team_a_values,
-                            borderColor: "#60a5fa",
+                            borderColor: "#6f1877",
                             backgroundColor: "rgba(96, 165, 250, 0.14)",
                             tension: 0.25,
                             spanGaps: false

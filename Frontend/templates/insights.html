@@ -4,9 +4,8 @@
 
 <h1>Insights</h1>
 
-<form method="GET" class="filter-box" style="margin-bottom: 24px;">
-    <form method="GET" class="filter-box" style="margin-bottom: 24px;">
-    <label for="season_id" style="color:#94a3b8; font-size:0.9rem; margin-right:8px;">Season:</label>
+<form method="GET" class="filter-box filter-box-inline">
+    <label for="season_id" class="filter-label">Season:</label>
     <select name="season_id" id="season_id" onchange="this.form.submit()">
         {% for s in seasons %}
         <option value="{{ s.season_id }}" {% if s.season_id == season_id %}selected{% endif %}>
@@ -14,11 +13,8 @@
         </option>
         {% endfor %}
     </select>
-</form>
     <button type="submit">Apply</button>
 </form>
-
-<br><br><br>
 
 <div class="kpi-strip">
     <div class="kpi-card">

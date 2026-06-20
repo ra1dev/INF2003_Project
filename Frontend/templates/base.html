@@ -3,31 +3,36 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#37003c">
+    <title>{{ title or "EPL Data Hub" }}</title>
 
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+          href="{{ url_for('static', filename='style.css', v='9') }}">
 </head>
 
 <body>
 
 <nav class="navbar">
-    <h2>EPL Database System</h2>
+    <a class="brand" href="/" aria-label="EPL Data Hub home">
+        <span class="brand-mark" aria-hidden="true">PL</span>
+        <span class="brand-copy">
+            <strong>EPL Data Hub</strong>
+            <small>Stats. Stories. Seasons.</small>
+        </span>
+    </a>
 
-    <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/tables">Tables</a>
-        <a href="/players">Players</a>
-        <a href="/player-comparison">Player Comparison</a>
-        <a href="/teams">Teams</a>
-        <a href="/team-comparison">Team Comparison</a>
-        <a href="/matches">Matches</a>
-        <a href="/predictions">Predictions</a>
-        <a href="/season-recap">Season Recap</a>
-        <a href="/season-table">Season Table</a>
-        <a href="/insights?season_id=1">Insights</a>
-        <a href="/nosql-insights">Event Analytics</a>
-        <a href="/event-search">Event Explorer</a>
+    <div class="nav-links" aria-label="Primary navigation">
+        <a href="/" {% if request.path == '/' %}class="active" aria-current="page"{% endif %}>Home</a>
+        <a href="/season-table" {% if request.path == '/season-table' %}class="active" aria-current="page"{% endif %}>Table</a>
+        <a href="/players" {% if request.path.startswith('/player') %}class="active" aria-current="page"{% endif %}>Players</a>
+        <a href="/teams" {% if request.path.startswith('/team') %}class="active" aria-current="page"{% endif %}>Teams</a>
+        <a href="/matches" {% if request.path.startswith('/match') %}class="active" aria-current="page"{% endif %}>Matches</a>
+        <a href="/predictions" {% if request.path == '/predictions' %}class="active" aria-current="page"{% endif %}>Predictions</a>
+        <a href="/season-recap" {% if request.path == '/season-recap' %}class="active" aria-current="page"{% endif %}>Recap</a>
+        <a href="/insights?season_id=1" {% if request.path == '/insights' %}class="active" aria-current="page"{% endif %}>Insights</a>
+        <a href="/nosql-insights" {% if request.path in ['/nosql-insights', '/event-search'] %}class="active" aria-current="page"{% endif %}>Events</a>
+        <a href="/tables" {% if request.path == '/tables' %}class="active" aria-current="page"{% endif %}>Data</a>
     </div>
 </nav>
 

@@ -2,53 +2,93 @@
 
 {% block content %}
 
-<h1>EPL Statistics Dashboard</h1>
+<section class="home-hero">
+    <div class="hero-content">
+        <span class="hero-kicker">The numbers behind the game</span>
+        <h1>Every match tells a story.</h1>
+        <p>Explore Premier League players, clubs, results and event-level data through one powerful statistics hub.</p>
+        <div class="hero-actions">
+            <a class="hero-primary" href="/season-table">View league table <span aria-hidden="true">&rarr;</span></a>
+            <a class="hero-secondary" href="/matches">Explore matches</a>
+        </div>
+    </div>
+    <div class="hero-score" aria-hidden="true">
+        <span class="score-label">DATA CENTRE</span>
+        <strong>90<span>+</span></strong>
+        <small>minutes of insight</small>
+    </div>
+</section>
+
+<div class="section-heading">
+    <div>
+        <span>Explore the league</span>
+        <h2>Choose your view</h2>
+    </div>
+</div>
 
 <div class="card-grid">
 
     <a href="/players" class="card">
+        <span class="card-number">01</span>
         <h2>Players</h2>
         <p>View all EPL players and season stats.</p>
+        <span class="card-link">Browse players &rarr;</span>
     </a>
 
     <a href="/player-comparison" class="card">
+        <span class="card-number">02</span>
         <h2>Player Comparison</h2>
         <p>Compare player output, ranks, roles, and season trends.</p>
+        <span class="card-link">Compare players &rarr;</span>
     </a>
 
     <a href="/teams" class="card">
+        <span class="card-number">03</span>
         <h2>Teams</h2>
         <p>View team statistics and performance.</p>
+        <span class="card-link">Browse clubs &rarr;</span>
     </a>
 
     <a href="/team-comparison" class="card">
+        <span class="card-number">04</span>
         <h2>Team Comparison</h2>
         <p>Compare two teams across one season or all seasons.</p>
+        <span class="card-link">Compare clubs &rarr;</span>
     </a>
 
     <a href="/matches" class="card">
+        <span class="card-number">05</span>
         <h2>Matches</h2>
         <p>Browse EPL match records.</p>
+        <span class="card-link">View fixtures &rarr;</span>
     </a>
 
     <a href="/predictions" class="card">
+        <span class="card-number">06</span>
         <h2>Predictions</h2>
         <p>View AI match predictions.</p>
+        <span class="card-link">See predictions &rarr;</span>
     </a>
 
     <a href="/season-recap" class="card">
+        <span class="card-number">07</span>
         <h2>Season Recap</h2>
         <p>View a summary of past seasons.</p>
+        <span class="card-link">Relive seasons &rarr;</span>
     </a>
 
     <a href="/nosql-insights" class="card">
+        <span class="card-number">08</span>
         <h2>Event Analytics</h2>
         <p>View MongoDB aggregations over nested event and player-match documents.</p>
+        <span class="card-link">Open analytics &rarr;</span>
     </a>
 
     <a href="/event-search" class="card">
+        <span class="card-number">09</span>
         <h2>Event Explorer</h2>
         <p>Search individual actions inside MongoDB match-event documents.</p>
+        <span class="card-link">Explore events &rarr;</span>
     </a>
 
 </div>

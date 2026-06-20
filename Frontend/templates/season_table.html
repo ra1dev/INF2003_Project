@@ -4,8 +4,8 @@
 
 <h1>Season Table</h1>
 
-<form method="GET" class="filter-box" style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
-    <label for="season" style="color:#94a3b8;font-size:0.95rem;">Season:</label>
+<form method="GET" class="filter-box filter-box-inline">
+    <label for="season" class="filter-label">Season:</label>
     <select name="season" id="season" onchange="this.form.submit()">
         {% for s in seasons %}
         <option value="{{ s.season_name }}" {% if selected_season == s.season_name %}selected{% endif %}>
@@ -18,14 +18,14 @@
 
 <div class="season-table-controls">
     <div class="controls-left">
-        <span style="color:#94a3b8;font-size:0.95rem;">Gameweek:</span>
-        <strong id="weekLabel" style="margin-left:8px;">GW {{ selected_week if selected_week else 1 }}</strong>
-        <select id="weekSelect" style="margin-left:12px;padding:8px;border-radius:8px;border:none;min-width:100px;background:#1e293b;color:white;">
+        <span class="filter-label">Gameweek:</span>
+        <strong id="weekLabel">GW {{ selected_week if selected_week else 1 }}</strong>
+        <select id="weekSelect" class="week-select">
             {% for w in weeks %}
             <option value="{{ w.week }}" {% if selected_week == w.week %}selected{% endif %}>GW {{ w.week }}</option>
             {% endfor %}
         </select>
-        <span id="weekDate" style="color:#94a3b8;margin-left:10px;font-size:0.95rem;">
+        <span id="weekDate" class="week-date">
             {% if weeks and selected_week %}{{ weeks[selected_week-1].match_date }}{% endif %}
         </span>
     </div>
@@ -56,7 +56,7 @@
     </thead>
     <tbody id="standingsBody">
         <tr>
-            <td colspan="11" style="text-align:center;color:#64748b;padding:24px;">Loading season table…</td>
+            <td colspan="11" class="empty-table-cell">Loading season table…</td>
         </tr>
     </tbody>
 </table>
@@ -105,7 +105,7 @@
         standingsBody.innerHTML = '';
 
         if (!standings.length) {
-            standingsBody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px;">No standings available for this gameweek.</td></tr>';
+            standingsBody.innerHTML = '<tr><td colspan="11" class="empty-table-cell">No standings available for this gameweek.</td></tr>';
             return;
         }
 
@@ -113,28 +113,31 @@
             const row = document.createElement('tr');
             if (team.movement === 'up') row.classList.add('row-up');
             if (team.movement === 'down') row.classList.add('row-down');
+            const goalDifferenceClass = team.gd > 0
+                ? 'goal-difference-positive'
+                : team.gd < 0 ? 'goal-difference-negative' : 'goal-difference-neutral';
 
             row.innerHTML = `
-                <td style="text-align:center; font-weight:700;">${team.position}</td>
+                <td class="position-cell">${team.position}</td>
                 <td class="pos-change">
                     ${team.movement === 'up' ? '▲' + team.movement_delta : team.movement === 'down' ? '▼' + team.movement_delta : ''}
                 </td>
                 <td>
-                    <div class="match-team-cell" style="justify-content:flex-start;gap:10px;"> 
-                        <img src="${team.team_logo}" class="mini-logo" style="width:24px;height:24px;"> 
+                    <div class="match-team-cell team-cell-compact">
+                        <img src="${team.team_logo}" class="mini-logo">
                         <span>${team.team_name}</span>
                     </div>
                 </td>
-                <td style="text-align:center">${team.played}</td>
-                <td style="text-align:center">${team.wins}</td>
-                <td style="text-align:center">${team.draws}</td>
-                <td style="text-align:center">${team.losses}</td>
-                <td style="text-align:center">${team.gf}</td>
-                <td style="text-align:center">${team.ga}</td>
-                <td style="text-align:center; color:${team.gd > 0 ? '#22c55e' : team.gd < 0 ? '#ef4444' : '#94a3b8'};">
+                <td class="numeric-cell">${team.played}</td>
+                <td class="numeric-cell">${team.wins}</td>
+                <td class="numeric-cell">${team.draws}</td>
+                <td class="numeric-cell">${team.losses}</td>
+                <td class="numeric-cell">${team.gf}</td>
+                <td class="numeric-cell">${team.ga}</td>
+                <td class="goal-difference-cell ${goalDifferenceClass}">
                     ${team.gd > 0 ? '+' : ''}${team.gd}
                 </td>
-                <td style="text-align:center; color:#60a5fa; font-weight:800;">${team.pts}</td>
+                <td class="points-cell">${team.pts}</td>
             `;
             standingsBody.appendChild(row);
         });
