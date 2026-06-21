@@ -1,8 +1,11 @@
+import time
 from flask import render_template, request
 from psycopg2.extras import RealDictCursor
 
 from Backend.db_conn import get_db
 
+
+import time  # add at top of file
 
 def season_recap():
     selected_season = request.args.get("season")
@@ -16,6 +19,10 @@ def season_recap():
     if not selected_season and seasons:
         selected_season = seasons[-1]["season_name"]
 
+    total_start = time.time()  # ← total timer start
+
+    # --- Champion ---
+    start = time.time()
     cur.execute("""
         SELECT
             t.team_name,
@@ -40,7 +47,10 @@ def season_recap():
         LIMIT 1;
     """, (selected_season,))
     champion = cur.fetchone()
+    print(f"[TIMING] champion query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Goal KPIs ---
+    start = time.time()
     cur.execute("""
         SELECT
             COUNT(DISTINCT mr.match_id) AS total_matches,
@@ -54,7 +64,10 @@ def season_recap():
         WHERE s.season_name = %s;
     """, (selected_season,))
     goal_kpis = cur.fetchone()
+    print(f"[TIMING] goal_kpis query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Card KPIs ---
+    start = time.time()
     cur.execute("""
         SELECT
             SUM(mts.yellow_cards) AS total_yellow,
@@ -65,7 +78,10 @@ def season_recap():
         WHERE s.season_name = %s;
     """, (selected_season,))
     card_kpis = cur.fetchone()
+    print(f"[TIMING] card_kpis query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Top Scorer ---
+    start = time.time()
     cur.execute("""
         SELECT
             p.player_name,
@@ -82,7 +98,10 @@ def season_recap():
         LIMIT 1;
     """, (selected_season,))
     top_scorer = cur.fetchone()
+    print(f"[TIMING] top_scorer query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Top Clean Sheets ---
+    start = time.time()
     cur.execute("""
         SELECT
             p.player_name,
@@ -99,7 +118,10 @@ def season_recap():
         LIMIT 1;
     """, (selected_season,))
     top_cs = cur.fetchone()
+    print(f"[TIMING] top_cs query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Standings ---
+    start = time.time()
     cur.execute("""
         SELECT
             t.team_name,
@@ -141,7 +163,10 @@ def season_recap():
         ORDER BY pts DESC, gd DESC, gf DESC;
     """, (selected_season,))
     standings = cur.fetchall()
+    print(f"[TIMING] standings query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Outcomes ---
+    start = time.time()
     cur.execute("""
         SELECT
             SUM(CASE WHEN mr.full_time_result = 'H' THEN 1 ELSE 0 END) AS home_wins,
@@ -152,7 +177,10 @@ def season_recap():
         WHERE s.season_name = %s;
     """, (selected_season,))
     outcomes = cur.fetchone()
+    print(f"[TIMING] outcomes query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Goals by Team ---
+    start = time.time()
     cur.execute("""
         SELECT
             t.team_name,
@@ -167,7 +195,10 @@ def season_recap():
         LIMIT 10;
     """, (selected_season,))
     goals_by_team = cur.fetchall()
+    print(f"[TIMING] goals_by_team query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Discipline ---
+    start = time.time()
     cur.execute("""
         SELECT
             t.team_name,
@@ -183,7 +214,10 @@ def season_recap():
         LIMIT 8;
     """, (selected_season,))
     discipline = cur.fetchall()
+    print(f"[TIMING] discipline query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Goals Leaders ---
+    start = time.time()
     cur.execute("""
         SELECT p.player_name, t.team_name, pss.goals AS val
         FROM player_season_stats pss
@@ -196,7 +230,10 @@ def season_recap():
         ORDER BY pss.goals DESC LIMIT 8;
     """, (selected_season,))
     goals_leaders = cur.fetchall()
+    print(f"[TIMING] goals_leaders query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Assists Leaders ---
+    start = time.time()
     cur.execute("""
         SELECT p.player_name, t.team_name, pss.assists AS val
         FROM player_season_stats pss
@@ -209,7 +246,10 @@ def season_recap():
         ORDER BY pss.assists DESC LIMIT 8;
     """, (selected_season,))
     assists_leaders = cur.fetchall()
+    print(f"[TIMING] assists_leaders query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Clean Sheet Leaders ---
+    start = time.time()
     cur.execute("""
         SELECT p.player_name, t.team_name, pss.clean_sheets AS val
         FROM player_season_stats pss
@@ -222,7 +262,10 @@ def season_recap():
         ORDER BY pss.clean_sheets DESC LIMIT 8;
     """, (selected_season,))
     cs_leaders = cur.fetchall()
+    print(f"[TIMING] cs_leaders query: {(time.time()-start)*1000:.2f}ms")
 
+    # --- Tackles Leaders ---
+    start = time.time()
     cur.execute("""
         SELECT p.player_name, t.team_name, pss.tackles AS val
         FROM player_season_stats pss
@@ -235,6 +278,9 @@ def season_recap():
         ORDER BY pss.tackles DESC LIMIT 8;
     """, (selected_season,))
     tackles_leaders = cur.fetchall()
+    print(f"[TIMING] tackles_leaders query: {(time.time()-start)*1000:.2f}ms")
+
+    print(f"[TIMING] TOTAL season_recap: {(time.time()-total_start)*1000:.2f}ms")  # ← grand total
 
     cur.close()
 
