@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>{{ title }}</h1>
+
+<form method="POST" class="filter-box stacked-form">
+    {% if favorite %}
+        <p>
+            Editing notes for
+            <strong>{{ favorite.team_name }}</strong>
+        </p>
+    {% else %}
+        <label for="team_id">Team</label>
+        <select id="team_id" name="team_id" required>
+            <option value="">Choose team</option>
+            {% for team in teams %}
+            <option value="{{ team.team_id }}">{{ team.team_name }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="5" placeholder="Why is this team a favorite?">{{ favorite.notes if favorite else "" }}</textarea>
+
+    <div class="crud-actions">
+        <button type="submit">Save</button>
+        <a href="{{ url_for('favorites.favorites') }}" class="reset-btn">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}

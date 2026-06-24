@@ -21,6 +21,7 @@
         <tr>
             <th>Team ID</th>
             <th>Team Name</th>
+            <th>Actions</th>
         </tr>
     </thead>
 
@@ -46,6 +47,14 @@
 
             </td>
 
+            <td>
+                <form method="POST"
+                      action="{{ url_for('favorites.add_team_from_list', team_id=team.team_id) }}"
+                      class="inline-favorite-form">
+                    <button type="submit">Favorite</button>
+                </form>
+            </td>
+
         </tr>
 
         {% endfor %}
@@ -57,6 +66,12 @@
     document.querySelectorAll(".clickable-row").forEach(row => {
         row.addEventListener("click", () => {
             window.location.href = row.dataset.href;
+        });
+    });
+
+    document.querySelectorAll(".inline-favorite-form").forEach(form => {
+        form.addEventListener("click", event => {
+            event.stopPropagation();
         });
     });
 </script>

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Favorites</h1>
+
+{% if error_message %}
+<p class="empty-state">{{ error_message }}</p>
+{% endif %}
+
+<div class="crud-actions">
+    <a href="{{ url_for('favorites.new_favorite_player') }}" class="reset-btn">Add Favorite Player</a>
+    <a href="{{ url_for('favorites.new_favorite_team') }}" class="reset-btn">Add Favorite Team</a>
+</div>
+
+<h2>Favorite Players</h2>
+
+<table class="players-table">
+    <thead>
+        <tr>
+            <th>Player</th>
+            <th>Current Club</th>
+            <th>Notes</th>
+            <th>Updated</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for favorite in favorite_players %}
+        <tr>
+            <td>
+                <a href="{{ url_for('players.player_detail', player_id=favorite.player_id) }}">
+                    {{ favorite.player_name }}
+                </a>
+            </td>
+            <td>
+                <div class="match-team-cell">
+                    <img src="{{ favorite.current_team_logo }}" class="mini-logo">
+                    <span>{{ favorite.current_team_name }}</span>
+                </div>
+            </td>
+            <td>{{ favorite.notes or "-" }}</td>
+            <td>{{ favorite.updated_at }}</td>
+            <td>
+                <div class="row-actions">
+                    <a href="{{ url_for('favorites.edit_favorite_player', favorite_id=favorite.favorite_id) }}">Edit</a>
+                    <form method="POST" action="{{ url_for('favorites.remove_favorite_player', favorite_id=favorite.favorite_id) }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">No favorite players yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Favorite Teams</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Team</th>
+            <th>Notes</th>
+            <th>Updated</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for favorite in favorite_teams %}
+        <tr>
+            <td>
+                <div class="team-cell">
+                    <img src="{{ favorite.team_logo }}" class="team-logo">
+                    <a href="{{ url_for('teams.team_detail', team_id=favorite.team_id) }}">
+                        {{ favorite.team_name }}
+                    </a>
+                </div>
+            </td>
+            <td>{{ favorite.notes or "-" }}</td>
+            <td>{{ favorite.updated_at }}</td>
+            <td>
+                <div class="row-actions">
+                    <a href="{{ url_for('favorites.edit_favorite_team', favorite_team_id=favorite.favorite_team_id) }}">Edit</a>
+                    <form method="POST" action="{{ url_for('favorites.remove_favorite_team', favorite_team_id=favorite.favorite_team_id) }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">No favorite teams yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

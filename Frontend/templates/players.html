@@ -39,6 +39,7 @@
             <th>Player Name</th>
             <th>Current Club</th>
             <th>Previous Clubs</th>
+            <th>Actions</th>
         </tr>
     </thead>
 
@@ -62,6 +63,14 @@
 
         <td class="previous-clubs-cell">{{ player.previous_team_names }}</td>
 
+        <td>
+            <form method="POST"
+                  action="{{ url_for('favorites.add_player_from_list', player_id=player.player_id) }}"
+                  class="inline-favorite-form">
+                <button type="submit">Favorite</button>
+            </form>
+        </td>
+
     </tr>
 
 {% endfor %}
@@ -72,6 +81,12 @@
     document.querySelectorAll(".clickable-row").forEach(row => {
         row.addEventListener("click", () => {
             window.location.href = row.dataset.href;
+        });
+    });
+
+    document.querySelectorAll(".inline-favorite-form").forEach(form => {
+        form.addEventListener("click", event => {
+            event.stopPropagation();
         });
     });
 </script>

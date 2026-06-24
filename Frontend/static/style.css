@@ -516,12 +516,12 @@ td {
 
 .stat-presets button,
 #resetStatsBtn {
-  background: #d8cfd9;
+  background: var(--pl-purple);
 }
 
 .stat-presets button:hover,
 #resetStatsBtn:hover {
-  background: #b9aabb;
+  background: var(--pl-pink);
 }
 
 .season-switcher {
@@ -2713,6 +2713,50 @@ button:hover {
 
 .event-annotation-tip span {
   color: var(--pl-purple); font-weight: 900;
+}
+
+.crud-actions,
+.row-actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
+.crud-actions {
+  margin: 14px 0 24px;
+}
+
+.row-actions form,
+.inline-favorite-form {
+  margin: 0;
+}
+
+.row-actions button,
+.inline-favorite-form button {
+  padding: 8px 12px; font-size: 12px;
+}
+
+.crud-actions .reset-btn,
+.row-actions a {
+  color: white; background: var(--pl-purple); text-decoration: none;
+}
+
+.crud-actions .reset-btn:hover,
+.row-actions a:hover {
+  color: white; background: var(--pl-pink); transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(55, 0, 60, .2);
+}
+
+.stacked-form {
+  align-items: stretch; flex-direction: column; max-width: 680px;
+}
+
+.stacked-form label {
+  font-weight: 900; color: var(--pl-purple);
+}
+
+.stacked-form textarea {
+  width: 100%; min-height: 130px; resize: vertical;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+  font: inherit; color: var(--ink); background: white;
 }
 
 #match-events {

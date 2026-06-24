@@ -66,7 +66,11 @@ def get_players(conn, search=None, team=None):
                 ON p.player_id = pts.player_id
             LEFT JOIN team t
                 ON pts.team_id = t.team_id
-            WHERE 1=1
+            WHERE EXISTS (
+                SELECT 1
+                FROM player_season_stats pss
+                WHERE pss.player_id = p.player_id
+            )
     """
     params = []
 

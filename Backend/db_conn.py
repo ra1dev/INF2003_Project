@@ -5,7 +5,7 @@ def get_db():
     if "db" not in g:
         g.db = psycopg2.connect(
             host="localhost",
-            dbname="EPL_DB",
+            dbname="epl_db_2",
             user="postgres",
             password="Password",
             port=5432
