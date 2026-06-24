@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Insights</h1>
+
+<div class="insight-view-switch" aria-label="Insight type">
+    <a href="{{ url_for('insights.insights_page', season_id=season_id, view='team') }}"
+       class="insight-view-link{% if insight_view == 'team' %} active{% endif %}">Team insights</a>
+    <a href="{{ url_for('insights.insights_page', season_id=season_id, view='player') }}"
+       class="insight-view-link{% if insight_view == 'player' %} active{% endif %}">Player insights</a>
+</div>
+
+<form method="GET" class="filter-box filter-box-inline">
+    <input type="hidden" name="view" value="{{ insight_view }}">
+    <label for="season_id" class="filter-label">Season:</label>
+    <select name="season_id" id="season_id" onchange="this.form.submit()">
+        {% for s in seasons %}
+        <option value="{{ s.season_id }}" {% if s.season_id == season_id %}selected{% endif %}>
+            {{ s.season_name }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit">Apply</button>
+</form>
+
+{% if insight_view == "team" %}
+
+<div class="kpi-strip">
+    <div class="kpi-card">
+        <div class="kpi-label">Best finishing</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ clinical_finishing[0].team_name if clinical_finishing else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ clinical_finishing[0].clinical_finishing_pct if clinical_finishing else "–" }}%
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Best shot accuracy</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ shot_accuracy[0].team_name if shot_accuracy else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ shot_accuracy[0].shot_accuracy_pct if shot_accuracy else "–" }}%
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Best home record</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ home_dominance[0].team_name if home_dominance else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ home_dominance[0].home_points_per_match if home_dominance else "–" }} pts/match
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Best away record</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ away_resilience[0].team_name if away_resilience else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ away_resilience[0].away_points_per_match if away_resilience else "–" }} pts/match
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-red">
+        <div class="kpi-label">Highest discipline risk</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ discipline_risk[0].team_name if discipline_risk else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ discipline_risk[0].discipline_risk_score if discipline_risk else "–" }}
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-gold">
+        <div class="kpi-label">Most wasteful attack</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ pressure_without_payoff[0].team_name if pressure_without_payoff else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ pressure_without_payoff[0].conversion_pct if pressure_without_payoff else "–" }}% conversion
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Best defence</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ defensive_resistance[0].team_name if defensive_resistance else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ defensive_resistance[0].goals_conceded_per_match if defensive_resistance else "–" }} conceded/match
+        </div>
+    </div>
+</div>
+
+<div class="recap-section-title">Team insights</div>
+
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="openTab(event,'tab-finishing')">Clinical Finishing</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-accuracy')">Shot Accuracy</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-home')">Home Dominance</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-away')">Away Resilience</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-discipline')">Discipline Risk</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-pressure')">Pressure Without Payoff</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-defence')">Defensive Resistance</button>
+</div>
+
+<div id="tab-finishing" class="tab-pane active">
+    <div class="card">
+        <div class="recap-panel-title">Clinical finishing</div>
+        <div class="recap-panel-sub">Goals scored compared with total shots</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Goals</th>
+                    <th>Shots</th>
+                    <th>Finishing %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in clinical_finishing %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.goals_scored }}</td>
+                    <td>{{ row.shots }}</td>
+                    <td>{{ row.clinical_finishing_pct }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-accuracy" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Shot accuracy</div>
+        <div class="recap-panel-sub">Shots on target as a share of total shots</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Shots</th>
+                    <th>On target</th>
+                    <th>Accuracy %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in shot_accuracy %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.shots }}</td>
+                    <td>{{ row.shots_on_target }}</td>
+                    <td>{{ row.shot_accuracy_pct }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-home" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Home dominance</div>
+        <div class="recap-panel-sub">Home points and home performance</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Home matches</th>
+                    <th>Home points</th>
+                    <th>Goals scored</th>
+                    <th>Goals conceded</th>
+                    <th>Pts / match</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in home_dominance %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.home_matches }}</td>
+                    <td>{{ row.home_points }}</td>
+                    <td>{{ row.home_goals_scored }}</td>
+                    <td>{{ row.home_goals_conceded }}</td>
+                    <td>{{ row.home_points_per_match }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-away" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Away resilience</div>
+        <div class="recap-panel-sub">Away points and away performance</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Away matches</th>
+                    <th>Away points</th>
+                    <th>Goals scored</th>
+                    <th>Goals conceded</th>
+                    <th>Pts / match</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in away_resilience %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.away_matches }}</td>
+                    <td>{{ row.away_points }}</td>
+                    <td>{{ row.away_goals_scored }}</td>
+                    <td>{{ row.away_goals_conceded }}</td>
+                    <td>{{ row.away_points_per_match }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-discipline" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Discipline risk</div>
+        <div class="recap-panel-sub">Weighted card score per match</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Matches</th>
+                    <th>Yellow</th>
+                    <th>Red</th>
+                    <th>Risk score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in discipline_risk %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.matches_played }}</td>
+                    <td>{{ row.yellow_cards }}</td>
+                    <td>{{ row.red_cards }}</td>
+                    <td>{{ row.discipline_risk_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-pressure" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Pressure without payoff</div>
+        <div class="recap-panel-sub">High shot volume with weaker conversion</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Shots</th>
+                    <th>Goals</th>
+                    <th>Shots / match</th>
+                    <th>Conversion %</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in pressure_without_payoff %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.shots }}</td>
+                    <td>{{ row.goals_scored }}</td>
+                    <td>{{ row.shots_per_match }}</td>
+                    <td>{{ row.conversion_pct }}</td>
+                    <td>{{ row.pressure_without_payoff_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-defence" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Defensive resistance</div>
+        <div class="recap-panel-sub">Fewest goals conceded per match</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Matches</th>
+                    <th>Goals conceded</th>
+                    <th>Conceded / match</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in defensive_resistance %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.team_name }}</td>
+                    <td>{{ row.matches_played }}</td>
+                    <td>{{ row.goals_conceded }}</td>
+                    <td>{{ row.goals_conceded_per_match }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+
+<div class="kpi-strip">
+    <div class="kpi-card">
+        <div class="kpi-label">Most efficient shooter</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ shot_efficiency[0].player_name if shot_efficiency else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ shot_efficiency[0].efficiency_index if shot_efficiency else "-" }} efficiency index
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-gold">
+        <div class="kpi-label">Largest team contribution</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ team_contribution[0].player_name if team_contribution else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ team_contribution[0].involvement_share_pct if team_contribution else "-" }}% of team goals
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Highest creative leverage</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ creative_leverage[0].player_name if creative_leverage else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ creative_leverage[0].creative_leverage_index if creative_leverage else "-" }} creativity index
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Strongest defensive influence</div>
+        <div class="kpi-value kpi-value-sm">
+            {{ defensive_influence[0].player_name if defensive_influence else "N/A" }}
+        </div>
+        <div class="kpi-sub">
+            {{ defensive_influence[0].defensive_influence_index if defensive_influence else "-" }} influence index
+        </div>
+    </div>
+</div>
+
+<div class="recap-section-title">Player insights</div>
+
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="openTab(event,'tab-player-efficiency')">Shot Efficiency</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-player-contribution')">Team Contribution</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-player-creativity')">Creative Leverage</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-player-defence')">Defensive Influence</button>
+</div>
+
+<div id="tab-player-efficiency" class="tab-pane active">
+    <div class="card">
+        <div class="recap-panel-title">Shot efficiency</div>
+        <div class="recap-panel-sub">
+            Composite of goal conversion (60%) and shot accuracy (40%). Players must meet the season's median shot volume.
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Goals</th>
+                        <th>Shots</th>
+                        <th>Accuracy %</th>
+                        <th>Conversion %</th>
+                        <th>On-target conversion %</th>
+                        <th>Index</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in shot_efficiency %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><a href="{{ url_for('players.player_detail', player_id=row.player_id) }}">{{ row.player_name }}</a></td>
+                        <td>{{ row.team_name or "-" }}</td>
+                        <td>{{ row.goals }}</td>
+                        <td>{{ row.shots }}</td>
+                        <td>{{ row.accuracy_pct }}</td>
+                        <td>{{ row.conversion_pct }}</td>
+                        <td>{{ row.on_target_conversion_pct }}</td>
+                        <td><strong>{{ row.efficiency_index }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="9" class="empty-table-cell">No eligible player data for this season.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="tab-player-contribution" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Team attacking contribution</div>
+        <div class="recap-panel-sub">
+            Goals plus assists as a share of the team's league goals. Limited to single-club players appearing in at least half of team matches.
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Apps</th>
+                        <th>Goals</th>
+                        <th>Assists</th>
+                        <th>Team goals</th>
+                        <th>Goal share %</th>
+                        <th>Involvement share %</th>
+                        <th>Club rank</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in team_contribution %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><a href="{{ url_for('players.player_detail', player_id=row.player_id) }}">{{ row.player_name }}</a></td>
+                        <td>{{ row.team_name }}</td>
+                        <td>{{ row.appearances }}</td>
+                        <td>{{ row.goals }}</td>
+                        <td>{{ row.assists }}</td>
+                        <td>{{ row.team_goals }}</td>
+                        <td>{{ row.goal_share_pct }}</td>
+                        <td><strong>{{ row.involvement_share_pct }}</strong></td>
+                        <td>{{ row.club_attack_rank }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="10" class="empty-table-cell">No eligible player data for this season.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="tab-player-creativity" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Creative leverage</div>
+        <div class="recap-panel-sub">
+            Percentile blend of big chances per 1,000 passes (45%), assist yield (35%), and through balls per appearance (20%).
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Apps</th>
+                        <th>Assists</th>
+                        <th>Big chances</th>
+                        <th>Chances / 1,000 passes</th>
+                        <th>Assist yield %</th>
+                        <th>Through balls / app</th>
+                        <th>Index</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in creative_leverage %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><a href="{{ url_for('players.player_detail', player_id=row.player_id) }}">{{ row.player_name }}</a></td>
+                        <td>{{ row.team_name or "-" }}</td>
+                        <td>{{ row.appearances }}</td>
+                        <td>{{ row.assists }}</td>
+                        <td>{{ row.big_chances_created }}</td>
+                        <td>{{ row.chances_per_1000_passes }}</td>
+                        <td>{{ row.assist_yield_pct }}</td>
+                        <td>{{ row.through_balls_per_appearance }}</td>
+                        <td><strong>{{ row.creative_leverage_index }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="10" class="empty-table-cell">No eligible player data for this season.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="tab-player-defence" class="tab-pane">
+    <div class="card">
+        <div class="recap-panel-title">Defensive influence</div>
+        <div class="recap-panel-sub">
+            Percentile blend of defensive actions per appearance (55%), duel success (30%), and error avoidance (15%). Goalkeepers are excluded.
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Position</th>
+                        <th>Apps</th>
+                        <th>Defensive actions</th>
+                        <th>Actions / app</th>
+                        <th>Duel win %</th>
+                        <th>Errors leading to goal</th>
+                        <th>Index</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in defensive_influence %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><a href="{{ url_for('players.player_detail', player_id=row.player_id) }}">{{ row.player_name }}</a></td>
+                        <td>{{ row.team_name or "-" }}</td>
+                        <td>{{ row.position_name }}</td>
+                        <td>{{ row.appearances }}</td>
+                        <td>{{ row.defensive_actions }}</td>
+                        <td>{{ row.actions_per_appearance }}</td>
+                        <td>{{ row.duel_win_pct if row.duel_win_pct is not none else "-" }}</td>
+                        <td>{{ row.errors_leading_to_goal }}</td>
+                        <td><strong>{{ row.defensive_influence_index }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="10" class="empty-table-cell">No eligible player data for this season.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+<script>
+function openTab(e, id) {
+    document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+    document.querySelectorAll(".tab-pane").forEach(function (p) { p.classList.remove("active"); });
+    e.target.classList.add("active");
+    document.getElementById(id).classList.add("active");
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,381 @@
+app_match_id,statsbomb_match_id,match_date,home_team,away_team,season,method
+53,3754217,2015-09-19,chelsea,arsenal,2015/2016,exact_key
+157,3754117,2015-12-13,aston villa,arsenal,2015/2016,exact_key
+170,3754296,2015-12-21,arsenal,man city,2015/2016,exact_key
+105,3753983,2015-10-31,swansea,arsenal,2015/2016,exact_key
+141,3754160,2015-12-05,arsenal,sunderland,2015/2016,exact_key
+30,3754129,2015-08-24,arsenal,liverpool,2015/2016,exact_key
+177,3754309,2015-12-26,southampton,arsenal,2015/2016,exact_key
+137,3754047,2015-11-29,liverpool,swansea,2015/2016,exact_key
+192,3754058,2016-01-02,leicester,bournemouth,2015/2016,exact_key
+88,3754245,2015-10-17,west brom,sunderland,2015/2016,exact_key
+164,3754136,2015-12-19,newcastle,aston villa,2015/2016,exact_key
+348,3754037,2016-04-30,everton,bournemouth,2015/2016,exact_key
+253,3754039,2016-02-13,crystal palace,watford,2015/2016,exact_key
+371,3754041,2016-05-15,arsenal,aston villa,2015/2016,exact_key
+379,3754042,2016-05-15,west brom,liverpool,2015/2016,exact_key
+303,3754043,2016-03-20,tottenham,bournemouth,2015/2016,exact_key
+189,3754045,2015-12-29,leicester,man city,2015/2016,exact_key
+324,3754048,2016-04-13,crystal palace,everton,2015/2016,exact_key
+261,3754049,2016-02-27,leicester,norwich,2015/2016,exact_key
+273,3754050,2016-03-01,sunderland,crystal palace,2015/2016,exact_key
+299,3754052,2016-03-19,west brom,norwich,2015/2016,exact_key
+292,3754053,2016-03-13,aston villa,tottenham,2015/2016,exact_key
+368,3754055,2016-05-11,liverpool,chelsea,2015/2016,exact_key
+190,3754226,2015-12-30,sunderland,liverpool,2015/2016,exact_key
+178,3754014,2015-12-26,stoke,man united,2015/2016,exact_key
+95,3754091,2015-10-24,stoke,watford,2015/2016,exact_key
+145,3754135,2015-12-05,stoke,man city,2015/2016,exact_key
+115,3754293,2015-11-07,stoke,chelsea,2015/2016,exact_key
+66,3754339,2015-09-26,stoke,bournemouth,2015/2016,exact_key
+56,3754146,2015-09-19,stoke,leicester,2015/2016,exact_key
+143,3754347,2015-12-05,man united,west ham,2015/2016,exact_key
+158,3754255,2015-12-13,liverpool,west brom,2015/2016,exact_key
+72,3754278,2015-10-03,bournemouth,watford,2015/2016,exact_key
+130,3753979,2015-11-23,crystal palace,sunderland,2015/2016,exact_key
+126,3753972,2015-11-21,swansea,bournemouth,2015/2016,exact_key
+65,3753978,2015-09-26,southampton,swansea,2015/2016,exact_key
+176,3753974,2015-12-26,newcastle,everton,2015/2016,exact_key
+13,3753993,2015-08-15,sunderland,norwich,2015/2016,exact_key
+99,3754015,2015-10-25,man united,man city,2015/2016,exact_key
+138,3754038,2015-11-29,norwich,arsenal,2015/2016,exact_key
+64,3754001,2015-09-26,newcastle,chelsea,2015/2016,exact_key
+37,3754007,2015-08-29,stoke,west brom,2015/2016,exact_key
+63,3754008,2015-09-26,man united,sunderland,2015/2016,exact_key
+110,3754029,2015-11-02,tottenham,aston villa,2015/2016,exact_key
+73,3753995,2015-10-03,chelsea,southampton,2015/2016,exact_key
+87,3753999,2015-10-17,watford,arsenal,2015/2016,exact_key
+92,3754017,2015-10-24,aston villa,swansea,2015/2016,exact_key
+107,3754006,2015-10-31,west brom,leicester,2015/2016,exact_key
+32,3754023,2015-08-29,bournemouth,leicester,2015/2016,exact_key
+34,3753984,2015-08-29,liverpool,west ham,2015/2016,exact_key
+59,3754011,2015-09-20,southampton,man united,2015/2016,exact_key
+55,3754010,2015-09-19,newcastle,watford,2015/2016,exact_key
+135,3754028,2015-11-28,man city,southampton,2015/2016,exact_key
+121,3753996,2015-11-21,chelsea,norwich,2015/2016,exact_key
+161,3754025,2015-12-19,chelsea,sunderland,2015/2016,exact_key
+51,3754068,2015-09-19,aston villa,west brom,2015/2016,exact_key
+183,3754056,2015-12-28,everton,stoke,2015/2016,exact_key
+58,3754040,2015-09-20,liverpool,norwich,2015/2016,exact_key
+80,3754074,2015-10-04,swansea,tottenham,2015/2016,exact_key
+77,3754076,2015-10-03,sunderland,west ham,2015/2016,exact_key
+82,3754067,2015-10-17,crystal palace,west ham,2015/2016,exact_key
+75,3754079,2015-10-03,man city,newcastle,2015/2016,exact_key
+104,3754090,2015-10-31,newcastle,stoke,2015/2016,exact_key
+33,3754083,2015-08-29,chelsea,crystal palace,2015/2016,exact_key
+54,3754077,2015-09-19,man city,west ham,2015/2016,exact_key
+79,3754060,2015-10-04,everton,liverpool,2015/2016,exact_key
+142,3754073,2015-12-05,chelsea,bournemouth,2015/2016,exact_key
+146,3754085,2015-12-05,swansea,leicester,2015/2016,exact_key
+169,3754051,2015-12-20,watford,liverpool,2015/2016,exact_key
+139,3754093,2015-11-29,tottenham,chelsea,2015/2016,exact_key
+150,3754046,2015-12-07,everton,crystal palace,2015/2016,exact_key
+155,3754072,2015-12-12,sunderland,watford,2015/2016,exact_key
+108,3754082,2015-11-01,everton,sunderland,2015/2016,exact_key
+48,3754106,2015-09-13,leicester,aston villa,2015/2016,exact_key
+74,3754099,2015-10-03,crystal palace,west brom,2015/2016,exact_key
+101,3754098,2015-10-31,chelsea,liverpool,2015/2016,exact_key
+180,3754057,2015-12-26,tottenham,norwich,2015/2016,exact_key
+8,3754112,2015-08-09,newcastle,southampton,2015/2016,exact_key
+24,3754104,2015-08-22,norwich,stoke,2015/2016,exact_key
+175,3754054,2015-12-26,man city,sunderland,2015/2016,exact_key
+144,3754113,2015-12-05,southampton,aston villa,2015/2016,exact_key
+11,3754107,2015-08-14,aston villa,man united,2015/2016,exact_key
+70,3754105,2015-09-28,west brom,everton,2015/2016,exact_key
+5,3754097,2015-08-08,man united,tottenham,2015/2016,exact_key
+89,3754102,2015-10-18,newcastle,norwich,2015/2016,exact_key
+81,3754115,2015-10-17,chelsea,aston villa,2015/2016,exact_key
+49,3754148,2015-09-13,sunderland,tottenham,2015/2016,exact_key
+52,3754169,2015-09-19,bournemouth,sunderland,2015/2016,exact_key
+61,3754174,2015-09-26,leicester,arsenal,2015/2016,exact_key
+127,3754185,2015-11-21,watford,man united,2015/2016,exact_key
+151,3754162,2015-12-12,bournemouth,man united,2015/2016,exact_key
+156,3754096,2015-12-12,west ham,stoke,2015/2016,exact_key
+78,3754171,2015-10-04,arsenal,man united,2015/2016,exact_key
+100,3754119,2015-10-25,sunderland,newcastle,2015/2016,exact_key
+91,3754126,2015-10-24,arsenal,everton,2015/2016,exact_key
+94,3754133,2015-10-24,norwich,west brom,2015/2016,exact_key
+103,3754167,2015-10-31,man city,norwich,2015/2016,exact_key
+10,3754145,2015-08-10,west brom,man city,2015/2016,exact_key
+166,3754153,2015-12-19,stoke,crystal palace,2015/2016,exact_key
+149,3754143,2015-12-06,newcastle,liverpool,2015/2016,exact_key
+134,3754186,2015-11-28,leicester,man united,2015/2016,exact_key
+185,3754130,2015-12-28,norwich,aston villa,2015/2016,exact_key
+165,3754188,2015-12-19,southampton,tottenham,2015/2016,exact_key
+131,3754178,2015-11-28,aston villa,watford,2015/2016,exact_key
+132,3754157,2015-11-28,bournemouth,everton,2015/2016,exact_key
+162,3754166,2015-12-19,everton,leicester,2015/2016,exact_key
+124,3754211,2015-11-21,newcastle,leicester,2015/2016,exact_key
+136,3754150,2015-11-28,sunderland,stoke,2015/2016,exact_key
+152,3754218,2015-12-12,crystal palace,southampton,2015/2016,exact_key
+36,3754205,2015-08-29,newcastle,arsenal,2015/2016,exact_key
+40,3754221,2015-08-30,swansea,man united,2015/2016,exact_key
+86,3754198,2015-10-17,tottenham,liverpool,2015/2016,exact_key
+84,3754193,2015-10-17,man city,bournemouth,2015/2016,exact_key
+60,3754222,2015-09-20,tottenham,crystal palace,2015/2016,exact_key
+46,3754213,2015-09-12,watford,swansea,2015/2016,exact_key
+62,3754212,2015-09-26,liverpool,aston villa,2015/2016,exact_key
+102,3754223,2015-10-31,crystal palace,man united,2015/2016,exact_key
+67,3754197,2015-09-26,tottenham,man city,2015/2016,exact_key
+123,3754208,2015-11-21,man city,liverpool,2015/2016,exact_key
+31,3754204,2015-08-29,aston villa,sunderland,2015/2016,exact_key
+117,3754194,2015-11-07,west ham,everton,2015/2016,exact_key
+167,3754219,2015-12-19,west brom,bournemouth,2015/2016,exact_key
+23,3754254,2015-08-22,man united,newcastle,2015/2016,exact_key
+98,3754230,2015-10-25,liverpool,southampton,2015/2016,exact_key
+171,3754285,2015-12-26,aston villa,west ham,2015/2016,exact_key
+27,3754233,2015-08-23,everton,man city,2015/2016,exact_key
+15,3754270,2015-08-15,tottenham,stoke,2015/2016,exact_key
+4,3754237,2015-08-08,leicester,sunderland,2015/2016,exact_key
+42,3754257,2015-09-12,crystal palace,man city,2015/2016,exact_key
+69,3754266,2015-09-27,watford,crystal palace,2015/2016,exact_key
+83,3754256,2015-10-17,everton,man united,2015/2016,exact_key
+96,3754288,2015-10-24,west ham,chelsea,2015/2016,exact_key
+111,3754238,2015-11-07,bournemouth,newcastle,2015/2016,exact_key
+90,3754269,2015-10-19,swansea,stoke,2015/2016,exact_key
+97,3754234,2015-10-25,bournemouth,tottenham,2015/2016,exact_key
+35,3754246,2015-08-29,man city,watford,2015/2016,exact_key
+106,3754273,2015-10-31,watford,west ham,2015/2016,exact_key
+93,3754263,2015-10-24,leicester,crystal palace,2015/2016,exact_key
+38,3754268,2015-08-29,tottenham,everton,2015/2016,exact_key
+147,3754286,2015-12-05,watford,norwich,2015/2016,exact_key
+186,3754291,2015-12-28,watford,tottenham,2015/2016,exact_key
+122,3754283,2015-11-21,everton,aston villa,2015/2016,exact_key
+140,3754235,2015-11-29,west ham,west brom,2015/2016,exact_key
+179,3754279,2015-12-26,swansea,west brom,2015/2016,exact_key
+159,3754276,2015-12-13,tottenham,newcastle,2015/2016,exact_key
+173,3754287,2015-12-26,chelsea,watford,2015/2016,exact_key
+168,3754259,2015-12-20,swansea,west ham,2015/2016,exact_key
+76,3754335,2015-10-03,norwich,leicester,2015/2016,exact_key
+57,3754298,2015-09-19,swansea,everton,2015/2016,exact_key
+45,3754315,2015-09-12,norwich,bournemouth,2015/2016,exact_key
+71,3754330,2015-10-03,aston villa,stoke,2015/2016,exact_key
+39,3754337,2015-08-30,southampton,norwich,2015/2016,exact_key
+113,3754297,2015-11-07,man united,west brom,2015/2016,exact_key
+128,3754301,2015-11-21,west brom,arsenal,2015/2016,exact_key
+68,3754323,2015-09-26,west ham,norwich,2015/2016,exact_key
+133,3754304,2015-11-28,crystal palace,newcastle,2015/2016,exact_key
+114,3754311,2015-11-07,norwich,swansea,2015/2016,exact_key
+153,3754328,2015-12-12,man city,swansea,2015/2016,exact_key
+47,3754325,2015-09-12,west brom,southampton,2015/2016,exact_key
+50,3754329,2015-09-14,west ham,newcastle,2015/2016,exact_key
+85,3754302,2015-10-17,southampton,leicester,2015/2016,exact_key
+160,3754013,2015-12-14,leicester,chelsea,2015/2016,exact_key
+163,3754044,2015-12-19,man united,norwich,2015/2016,exact_key
+120,3754351,2015-11-08,liverpool,crystal palace,2015/2016,exact_key
+174,3754343,2015-12-26,liverpool,leicester,2015/2016,exact_key
+129,3754109,2015-11-22,tottenham,west ham,2015/2016,exact_key
+154,3754182,2015-12-12,norwich,everton,2015/2016,exact_key
+41,3754240,2015-09-12,arsenal,stoke,2015/2016,exact_key
+43,3754336,2015-09-12,everton,chelsea,2015/2016,exact_key
+125,3754247,2015-11-21,southampton,stoke,2015/2016,exact_key
+112,3754156,2015-11-07,leicester,watford,2015/2016,exact_key
+118,3754265,2015-11-08,arsenal,tottenham,2015/2016,exact_key
+116,3754000,2015-11-07,sunderland,southampton,2015/2016,exact_key
+44,3754003,2015-09-12,man united,liverpool,2015/2016,exact_key
+14,3754344,2015-08-15,swansea,newcastle,2015/2016,exact_key
+26,3754131,2015-08-22,west ham,bournemouth,2015/2016,exact_key
+3,3754300,2015-08-08,everton,watford,2015/2016,exact_key
+18,3754312,2015-08-16,crystal palace,arsenal,2015/2016,exact_key
+6,3754138,2015-08-08,norwich,crystal palace,2015/2016,exact_key
+17,3754203,2015-08-15,west ham,leicester,2015/2016,exact_key
+21,3754190,2015-08-22,crystal palace,aston villa,2015/2016,exact_key
+19,3754066,2015-08-16,man city,chelsea,2015/2016,exact_key
+12,3754034,2015-08-15,southampton,everton,2015/2016,exact_key
+9,3753985,2015-08-09,stoke,liverpool,2015/2016,exact_key
+22,3753987,2015-08-22,leicester,tottenham,2015/2016,exact_key
+28,3754189,2015-08-23,watford,southampton,2015/2016,exact_key
+25,3754180,2015-08-22,sunderland,swansea,2015/2016,exact_key
+29,3754059,2015-08-23,west brom,chelsea,2015/2016,exact_key
+302,3754064,2016-03-20,southampton,liverpool,2015/2016,exact_key
+210,3754065,2016-01-13,tottenham,leicester,2015/2016,exact_key
+181,3754173,2015-12-28,arsenal,bournemouth,2015/2016,exact_key
+310,3754175,2016-04-02,sunderland,west brom,2015/2016,exact_key
+294,3753973,2016-03-19,chelsea,west ham,2015/2016,exact_key
+225,3753975,2016-01-23,sunderland,bournemouth,2015/2016,exact_key
+274,3753976,2016-03-02,arsenal,swansea,2015/2016,exact_key
+298,3753977,2016-03-19,watford,stoke,2015/2016,exact_key
+296,3753980,2016-03-19,everton,arsenal,2015/2016,exact_key
+201,3753981,2016-01-12,aston villa,crystal palace,2015/2016,exact_key
+312,3753982,2016-04-03,leicester,southampton,2015/2016,exact_key
+321,3753986,2016-04-10,liverpool,stoke,2015/2016,exact_key
+289,3753988,2016-03-12,bournemouth,swansea,2015/2016,exact_key
+370,3753989,2016-05-11,sunderland,everton,2015/2016,exact_key
+345,3753990,2016-04-24,sunderland,arsenal,2015/2016,exact_key
+275,3753991,2016-03-02,liverpool,man city,2015/2016,exact_key
+366,3753992,2016-05-08,tottenham,southampton,2015/2016,exact_key
+375,3753994,2016-05-15,southampton,crystal palace,2015/2016,exact_key
+238,3753997,2016-02-02,west ham,aston villa,2015/2016,exact_key
+188,3753998,2015-12-28,west ham,southampton,2015/2016,exact_key
+293,3754002,2016-03-14,leicester,newcastle,2015/2016,exact_key
+212,3754004,2016-01-16,bournemouth,norwich,2015/2016,exact_key
+277,3754005,2016-03-02,stoke,newcastle,2015/2016,exact_key
+331,3754009,2016-04-17,arsenal,crystal palace,2015/2016,exact_key
+262,3754012,2016-02-27,southampton,chelsea,2015/2016,exact_key
+317,3754016,2016-04-09,southampton,newcastle,2015/2016,exact_key
+355,3754018,2016-05-01,swansea,liverpool,2015/2016,exact_key
+184,3754019,2015-12-28,man united,chelsea,2015/2016,exact_key
+202,3754021,2016-01-12,bournemouth,west ham,2015/2016,exact_key
+315,3754022,2016-04-09,crystal palace,norwich,2015/2016,exact_key
+328,3754024,2016-04-16,newcastle,swansea,2015/2016,exact_key
+359,3754026,2016-05-07,crystal palace,stoke,2015/2016,exact_key
+217,3754027,2016-01-16,tottenham,sunderland,2015/2016,exact_key
+319,3754030,2016-04-09,watford,everton,2015/2016,exact_key
+256,3754031,2016-02-13,sunderland,man united,2015/2016,exact_key
+208,3754032,2016-01-13,stoke,norwich,2015/2016,exact_key
+360,3754033,2016-05-07,leicester,everton,2015/2016,exact_key
+316,3754035,2016-04-09,man city,west brom,2015/2016,exact_key
+195,3754036,2016-01-02,sunderland,aston villa,2015/2016,exact_key
+279,3754061,2016-03-05,chelsea,stoke,2015/2016,exact_key
+204,3754062,2016-01-13,chelsea,west brom,2015/2016,exact_key
+351,3754063,2016-04-30,watford,aston villa,2015/2016,exact_key
+191,3754069,2016-01-02,arsenal,newcastle,2015/2016,exact_key
+357,3754070,2016-05-07,aston villa,newcastle,2015/2016,exact_key
+209,3754071,2016-01-13,swansea,sunderland,2015/2016,exact_key
+305,3754075,2016-04-02,aston villa,chelsea,2015/2016,exact_key
+248,3754080,2016-02-06,tottenham,watford,2015/2016,exact_key
+288,3754081,2016-03-06,west brom,man united,2015/2016,exact_key
+227,3754084,2016-01-23,west brom,aston villa,2015/2016,exact_key
+338,3754086,2016-04-20,west ham,watford,2015/2016,exact_key
+307,3754087,2016-04-02,liverpool,tottenham,2015/2016,exact_key
+203,3754088,2016-01-12,newcastle,man united,2015/2016,exact_key
+232,3754089,2016-02-02,crystal palace,bournemouth,2015/2016,exact_key
+356,3754092,2016-05-02,chelsea,tottenham,2015/2016,exact_key
+234,3754094,2016-02-02,man united,stoke,2015/2016,exact_key
+236,3754095,2016-02-02,sunderland,man city,2015/2016,exact_key
+301,3754100,2016-03-20,newcastle,sunderland,2015/2016,exact_key
+194,3754101,2016-01-02,norwich,southampton,2015/2016,exact_key
+240,3754103,2016-02-03,watford,chelsea,2015/2016,exact_key
+362,3754108,2016-05-07,sunderland,chelsea,2015/2016,exact_key
+228,3754110,2016-01-23,west ham,man city,2015/2016,exact_key
+229,3754111,2016-01-24,arsenal,chelsea,2015/2016,exact_key
+199,3754114,2016-01-03,crystal palace,chelsea,2015/2016,exact_key
+318,3754116,2016-04-09,swansea,chelsea,2015/2016,exact_key
+304,3754118,2016-04-02,arsenal,watford,2015/2016,exact_key
+245,3754120,2016-02-06,southampton,west ham,2015/2016,exact_key
+264,3754121,2016-02-27,watford,bournemouth,2015/2016,exact_key
+197,3754122,2016-01-02,west brom,stoke,2015/2016,exact_key
+373,3754123,2016-05-15,everton,norwich,2015/2016,exact_key
+300,3754124,2016-03-20,man city,man united,2015/2016,exact_key
+213,3754125,2016-01-16,chelsea,everton,2015/2016,exact_key
+246,3754127,2016-02-06,stoke,everton,2015/2016,exact_key
+350,3754132,2016-04-30,stoke,sunderland,2015/2016,exact_key
+367,3754134,2016-05-10,west ham,man united,2015/2016,exact_key
+326,3754137,2016-04-16,everton,southampton,2015/2016,exact_key
+257,3754139,2016-02-13,swansea,southampton,2015/2016,exact_key
+200,3754140,2016-01-03,everton,tottenham,2015/2016,exact_key
+206,3754142,2016-01-13,man city,everton,2015/2016,exact_key
+306,3754144,2016-04-02,bournemouth,man city,2015/2016,exact_key
+260,3754147,2016-02-14,man city,tottenham,2015/2016,exact_key
+377,3754149,2016-05-15,swansea,man city,2015/2016,exact_key
+284,3754151,2016-03-05,swansea,norwich,2015/2016,exact_key
+322,3754152,2016-04-10,sunderland,leicester,2015/2016,exact_key
+342,3754154,2016-04-23,liverpool,newcastle,2015/2016,exact_key
+330,3754155,2016-04-16,west brom,watford,2015/2016,exact_key
+363,3754158,2016-05-07,west ham,swansea,2015/2016,exact_key
+380,3754159,2016-05-17,man united,bournemouth,2015/2016,exact_key
+220,3754161,2016-01-18,swansea,watford,2015/2016,exact_key
+230,3754163,2016-01-24,everton,swansea,2015/2016,exact_key
+283,3754164,2016-03-05,southampton,sunderland,2015/2016,exact_key
+353,3754165,2016-05-01,man united,leicester,2015/2016,exact_key
+216,3754168,2016-01-16,southampton,west brom,2015/2016,exact_key
+349,3754170,2016-04-30,newcastle,crystal palace,2015/2016,exact_key
+329,3754172,2016-04-16,norwich,sunderland,2015/2016,exact_key
+311,3754176,2016-04-02,west ham,crystal palace,2015/2016,exact_key
+282,3754177,2016-03-05,newcastle,bournemouth,2015/2016,exact_key
+221,3754179,2016-01-23,crystal palace,tottenham,2015/2016,exact_key
+295,3754181,2016-03-19,crystal palace,leicester,2015/2016,exact_key
+207,3754183,2016-01-13,southampton,watford,2015/2016,exact_key
+347,3754184,2016-04-30,arsenal,norwich,2015/2016,exact_key
+334,3754187,2016-04-18,stoke,tottenham,2015/2016,exact_key
+109,3754191,2015-11-01,southampton,bournemouth,2015/2016,exact_key
+352,3754192,2016-04-30,west brom,west ham,2015/2016,exact_key
+187,3754195,2015-12-28,west brom,newcastle,2015/2016,exact_key
+291,3754196,2016-03-12,stoke,southampton,2015/2016,exact_key
+376,3754199,2016-05-15,stoke,west ham,2015/2016,exact_key
+223,3754200,2016-01-23,man united,southampton,2015/2016,exact_key
+231,3754201,2016-02-02,arsenal,southampton,2015/2016,exact_key
+219,3754202,2016-01-17,stoke,arsenal,2015/2016,exact_key
+335,3754206,2016-04-19,newcastle,man city,2015/2016,exact_key
+369,3754207,2016-05-11,norwich,watford,2015/2016,exact_key
+323,3754209,2016-04-10,tottenham,man united,2015/2016,exact_key
+361,3754210,2016-05-07,norwich,man united,2015/2016,exact_key
+259,3754214,2016-02-14,aston villa,liverpool,2015/2016,exact_key
+148,3754215,2015-12-05,west brom,tottenham,2015/2016,exact_key
+332,3754216,2016-04-17,bournemouth,liverpool,2015/2016,exact_key
+287,3754220,2016-03-06,crystal palace,liverpool,2015/2016,exact_key
+297,3754224,2016-03-19,swansea,aston villa,2015/2016,exact_key
+358,3754225,2016-05-07,bournemouth,west brom,2015/2016,exact_key
+333,3754227,2016-04-17,leicester,west ham,2015/2016,exact_key
+344,3754228,2016-04-24,leicester,swansea,2015/2016,exact_key
+372,3754229,2016-05-15,chelsea,leicester,2015/2016,exact_key
+271,3754231,2016-03-01,leicester,west brom,2015/2016,exact_key
+276,3754232,2016-03-02,man united,watford,2015/2016,exact_key
+265,3754236,2016-02-27,west brom,crystal palace,2015/2016,exact_key
+268,3754239,2016-02-28,man united,arsenal,2015/2016,exact_key
+320,3754241,2016-04-09,west ham,arsenal,2015/2016,exact_key
+341,3754242,2016-04-23,bournemouth,chelsea,2015/2016,exact_key
+308,3754243,2016-04-02,norwich,newcastle,2015/2016,exact_key
+255,3754244,2016-02-13,norwich,west ham,2015/2016,exact_key
+281,3754249,2016-03-05,man city,aston villa,2015/2016,exact_key
+211,3754250,2016-01-16,aston villa,leicester,2015/2016,exact_key
+198,3754251,2016-01-02,west ham,liverpool,2015/2016,exact_key
+239,3754252,2016-02-03,everton,newcastle,2015/2016,exact_key
+249,3754253,2016-02-07,bournemouth,arsenal,2015/2016,exact_key
+214,3754260,2016-01-16,man city,crystal palace,2015/2016,exact_key
+258,3754261,2016-02-14,arsenal,leicester,2015/2016,exact_key
+314,3754262,2016-04-09,aston villa,bournemouth,2015/2016,exact_key
+252,3754264,2016-02-13,chelsea,newcastle,2015/2016,exact_key
+327,3754295,2016-04-16,man united,aston villa,2015/2016,exact_key
+226,3754271,2016-01-23,watford,newcastle,2015/2016,exact_key
+309,3754272,2016-04-02,stoke,swansea,2015/2016,exact_key
+251,3754274,2016-02-13,bournemouth,stoke,2015/2016,exact_key
+233,3754275,2016-02-02,leicester,liverpool,2015/2016,exact_key
+280,3754277,2016-03-05,everton,west ham,2015/2016,exact_key
+272,3754280,2016-03-01,norwich,chelsea,2015/2016,exact_key
+250,3754281,2016-02-07,chelsea,man united,2015/2016,exact_key
+340,3754282,2016-04-23,aston villa,southampton,2015/2016,exact_key
+339,3754284,2016-04-21,arsenal,west brom,2015/2016,exact_key
+286,3754289,2016-03-05,watford,leicester,2015/2016,exact_key
+243,3754290,2016-02-06,man city,leicester,2015/2016,exact_key
+244,3754292,2016-02-06,newcastle,west brom,2015/2016,exact_key
+336,3754294,2016-04-20,liverpool,everton,2015/2016,exact_key
+172,3754248,2015-12-26,bournemouth,crystal palace,2015/2016,exact_key
+313,3754299,2016-04-03,man united,everton,2015/2016,exact_key
+247,3754303,2016-02-06,swansea,crystal palace,2015/2016,exact_key
+205,3754305,2016-01-13,liverpool,arsenal,2015/2016,exact_key
+241,3754306,2016-02-06,aston villa,norwich,2015/2016,exact_key
+343,3754307,2016-04-23,man city,stoke,2015/2016,exact_key
+378,3754308,2016-05-15,watford,sunderland,2015/2016,exact_key
+337,3754310,2016-04-20,man united,crystal palace,2015/2016,exact_key
+290,3754313,2016-03-12,norwich,man city,2015/2016,exact_key
+365,3754314,2016-05-08,man city,arsenal,2015/2016,exact_key
+242,3754316,2016-02-06,liverpool,sunderland,2015/2016,exact_key
+235,3754317,2016-02-02,norwich,tottenham,2015/2016,exact_key
+285,3754318,2016-03-05,tottenham,arsenal,2015/2016,exact_key
+193,3754319,2016-01-02,man united,swansea,2015/2016,exact_key
+354,3754320,2016-05-01,southampton,man city,2015/2016,exact_key
+263,3754321,2016-02-27,stoke,aston villa,2015/2016,exact_key
+325,3754322,2016-04-16,chelsea,man city,2015/2016,exact_key
+267,3754324,2016-02-28,tottenham,swansea,2015/2016,exact_key
+182,3754326,2015-12-28,crystal palace,swansea,2015/2016,exact_key
+269,3754327,2016-03-01,aston villa,everton,2015/2016,exact_key
+266,3754331,2016-02-27,west ham,sunderland,2015/2016,exact_key
+346,3754332,2016-04-25,tottenham,west brom,2015/2016,exact_key
+374,3754333,2016-05-15,newcastle,tottenham,2015/2016,exact_key
+270,3754334,2016-03-01,bournemouth,southampton,2015/2016,exact_key
+215,3754338,2016-01-16,newcastle,west ham,2015/2016,exact_key
+237,3754340,2016-02-02,west brom,swansea,2015/2016,exact_key
+222,3754341,2016-01-23,leicester,stoke,2015/2016,exact_key
+364,3754342,2016-05-08,liverpool,watford,2015/2016,exact_key
+218,3754345,2016-01-17,liverpool,man united,2015/2016,exact_key
+196,3754346,2016-01-02,watford,man city,2015/2016,exact_key
+224,3754348,2016-01-23,norwich,liverpool,2015/2016,exact_key
+278,3754349,2016-03-02,west ham,tottenham,2015/2016,exact_key
+254,3754350,2016-02-13,everton,west brom,2015/2016,exact_key
+119,3754258,2015-11-08,aston villa,man city,2015/2016,exact_key
+20,3754020,2015-08-17,liverpool,bournemouth,2015/2016,exact_key
+16,3754267,2015-08-15,watford,west brom,2015/2016,exact_key
+7,3754141,2015-08-09,arsenal,west ham,2015/2016,exact_key
+1,3754128,2015-08-08,bournemouth,aston villa,2015/2016,exact_key
+2,3754078,2015-08-08,chelsea,swansea,2015/2016,exact_key

@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Season Recap</h1>
+
+<!-- Top filter bar: season + search boxes -->
+<form method="GET" class="filter-box filter-box-inline">
+    <label for="season" class="filter-label">Season:</label>
+    <select name="season" id="season" onchange="this.form.submit()">
+        {% for s in seasons %}
+        <option value="{{ s.season_name }}" {% if selected_season==s.season_name %}selected{% endif %}>
+            {{ s.season_name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <input type="text"
+           id="teamSearch"
+           placeholder="Search team in standings..."
+           class="recap-search-input"
+           oninput="filterStandings()">
+
+    <input type="text"
+           id="playerSearch"
+           placeholder="Search player or club..."
+           class="recap-search-input"
+           oninput="filterPlayers()">
+</form>
+
+<!-- Hidden data containers for JS -->
+<div id="chart-data" hidden
+    data-goals-labels='{{ goals_by_team | map(attribute="team_name") | list | tojson }}'
+    data-goals-values='{{ goals_by_team | map(attribute="goals_scored") | list | tojson }}'
+    data-outcome-home="{{ (outcomes.home_wins or 0) if outcomes else 0 }}"
+    data-outcome-draws="{{ (outcomes.draws or 0) if outcomes else 0 }}"
+    data-outcome-away="{{ (outcomes.away_wins or 0) if outcomes else 0 }}"
+    data-disc-labels='{{ discipline | map(attribute="team_name") | list | tojson }}'
+    data-disc-yellow='{{ discipline | map(attribute="yellow_cards") | list | tojson }}'
+    data-disc-red='{{ discipline | map(attribute="red_cards") | list | tojson }}'
+    data-def-labels='{{ standings[:8] | map(attribute="team_name") | list | tojson }}'
+    data-def-values='{{ standings[:8] | map(attribute="ga") | list | tojson }}'></div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+    <div class="kpi-card kpi-gold">
+        <div class="kpi-label">Champion</div>
+        <div class="kpi-value kpi-value-sm">
+            {% if champion %}
+            <img src="{{ champion.team_logo }}" class="mini-logo champion-logo">
+            {{ champion.team_name }}
+            {% else %}N/A{% endif %}
+        </div>
+        <div class="kpi-sub">{{ champion.pts if champion else "–" }} pts</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Matches played</div>
+        <div class="kpi-value">{{ goal_kpis.total_matches if goal_kpis else "–" }}</div>
+        <div class="kpi-sub">This season</div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Total goals</div>
+        <div class="kpi-value">{{ goal_kpis.total_goals if goal_kpis else "–" }}</div>
+        <div class="kpi-sub">{{ goal_kpis.avg_goals if goal_kpis else "–" }} per match</div>
+    </div>
+
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Top scorer</div>
+        <div class="kpi-value kpi-value-sm">{{ top_scorer.player_name if top_scorer else "N/A" }}</div>
+        <div class="kpi-sub">{% if top_scorer %}{{ top_scorer.goals }} goals · {{ top_scorer.team_name }}{% endif %}</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Most clean sheets</div>
+        <div class="kpi-value kpi-value-sm">{{ top_cs.player_name if top_cs else "N/A" }}</div>
+        <div class="kpi-sub">{% if top_cs %}{{ top_cs.clean_sheets }} · {{ top_cs.team_name }}{% endif %}</div>
+    </div>
+
+    <div class="kpi-card kpi-red">
+        <div class="kpi-label">Total bookings</div>
+        <div class="kpi-value">
+            {% if card_kpis %}{{ (card_kpis.total_yellow or 0) + (card_kpis.total_red or 0) }}{% else %}–{% endif %}
+        </div>
+        <div class="kpi-sub">
+            {% if card_kpis %}{{ card_kpis.total_yellow or 0 }} yellow · {{ card_kpis.total_red or 0 }} red{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- CHARTS ROW 1 -->
+<div class="recap-section-title">Team performance</div>
+
+<div class="recap-two-col">
+    <div class="card">
+        <div class="recap-panel-title">Goals scored by team</div>
+        <div class="recap-panel-sub">Top 10 teams by total goals this season</div>
+        <div class="recap-chart-wrap"><canvas id="goalsChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="recap-panel-title">Match outcomes</div>
+        <div class="recap-panel-sub">Home wins · draws · away wins split</div>
+        <div class="recap-chart-wrap"><canvas id="outcomeChart"></canvas></div>
+    </div>
+</div>
+
+<div class="recap-two-col">
+    <div class="card">
+        <div class="recap-panel-title">Discipline (top 8 clubs)</div>
+        <div class="recap-panel-sub">Yellow and red cards issued per team</div>
+        <div class="recap-chart-wrap"><canvas id="disciplineChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="recap-panel-title">Best defence</div>
+        <div class="recap-panel-sub">Fewest goals conceded (top 8 teams)</div>
+        <div class="recap-chart-wrap"><canvas id="defenceChart"></canvas></div>
+    </div>
+</div>
+
+<!-- LEAGUE TABLE -->
+<div class="recap-section-title">Final standings</div>
+
+<table id="standingsTable">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Pld</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+            <th>GF</th>
+            <th>GA</th>
+            <th>GD</th>
+            <th>Pts</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in standings %}
+        {% set pos = loop.index %}
+        <tr class="standings-row {% if pos == 1 %}row-champion{% elif pos <= 4 %}row-cl{% elif pos >= standings|length - 2 %}row-rel{% endif %}">
+            <td class="position-cell">{{ pos }}</td>
+            <td>
+                <div class="match-team-cell">
+                    <img src="{{ team.team_logo }}" class="mini-logo">
+                    <span class="row-team-name">{{ team.team_name }}</span>
+                </div>
+            </td>
+            <td class="numeric-cell">{{ team.played }}</td>
+            <td class="numeric-cell">{{ team.wins }}</td>
+            <td class="numeric-cell">{{ team.draws }}</td>
+            <td class="numeric-cell">{{ team.losses }}</td>
+            <td class="numeric-cell">{{ team.gf }}</td>
+            <td class="numeric-cell">{{ team.ga }}</td>
+            <td class="goal-difference-cell {% if team.gd > 0 %}goal-difference-positive{% elif team.gd < 0 %}goal-difference-negative{% else %}goal-difference-neutral{% endif %}">
+                {% if team.gd > 0 %}+{% endif %}{{ team.gd }}
+            </td>
+            <td class="points-cell">{{ team.pts }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="10" class="empty-table-cell">No standings data available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="zone-legend">
+    <span><span class="zone-dot zone-dot-champion"></span> Champion</span>
+    <span><span class="zone-dot zone-dot-europe"></span> Champions League (Top 4)</span>
+    <span><span class="zone-dot zone-dot-relegated"></span> Relegated (Bottom 3)</span>
+</div>
+
+<!-- PLAYER LEADERS -->
+<div class="recap-section-title">Player leaders</div>
+
+<div class="card recap-leaders-card">
+    <div class="recap-panel-title">Statistical leaders</div>
+    <div class="recap-panel-sub">Top 8 per category from player_season_stats</div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="openTab(event,'tab-goals')">Goals</button>
+        <button class="tab-btn" onclick="openTab(event,'tab-assists')">Assists</button>
+        <button class="tab-btn" onclick="openTab(event,'tab-cs')">Clean sheets</button>
+        <button class="tab-btn" onclick="openTab(event,'tab-tackles')">Tackles</button>
+    </div>
+
+    <!-- Goals -->
+    <div id="tab-goals" class="tab-pane active">
+        {% set max_val = goals_leaders[0].val if goals_leaders else 1 %}
+        <table>
+            <thead>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Goals</th></tr>
+            </thead>
+            <tbody>
+                {% for p in goals_leaders %}
+                <tr class="player-row">
+                    <td class="leader-rank{% if loop.index==1 %} leader-rank-first{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td class="player-name-cell">{{ p.player_name }}</td>
+                    <td class="player-club-cell">{{ p.team_name or "–" }}</td>
+                    <td>
+                        <div class="leader-bar-row">
+                            <div class="leader-bar-track">
+                                <div class="leader-bar-fill" style="--leader-width:{{ (p.val / max_val * 100)|round }}%"></div>
+                            </div>
+                            <span class="leader-value">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-table-cell">No data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Assists -->
+    <div id="tab-assists" class="tab-pane">
+        {% set max_val = assists_leaders[0].val if assists_leaders else 1 %}
+        <table>
+            <thead>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Assists</th></tr>
+            </thead>
+            <tbody>
+                {% for p in assists_leaders %}
+                <tr class="player-row">
+                    <td class="leader-rank{% if loop.index==1 %} leader-rank-first{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td class="player-name-cell">{{ p.player_name }}</td>
+                    <td class="player-club-cell">{{ p.team_name or "–" }}</td>
+                    <td>
+                        <div class="leader-bar-row">
+                            <div class="leader-bar-track">
+                                <div class="leader-bar-fill" style="--leader-width:{{ (p.val / max_val * 100)|round }}%"></div>
+                            </div>
+                            <span class="leader-value">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-table-cell">No data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Clean sheets -->
+    <div id="tab-cs" class="tab-pane">
+        {% set max_val = cs_leaders[0].val if cs_leaders else 1 %}
+        <table>
+            <thead>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Clean sheets</th></tr>
+            </thead>
+            <tbody>
+                {% for p in cs_leaders %}
+                <tr class="player-row">
+                    <td class="leader-rank{% if loop.index==1 %} leader-rank-first{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td class="player-name-cell">{{ p.player_name }}</td>
+                    <td class="player-club-cell">{{ p.team_name or "–" }}</td>
+                    <td>
+                        <div class="leader-bar-row">
+                            <div class="leader-bar-track">
+                                <div class="leader-bar-fill" style="--leader-width:{{ (p.val / max_val * 100)|round }}%"></div>
+                            </div>
+                            <span class="leader-value">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-table-cell">No data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tackles -->
+    <div id="tab-tackles" class="tab-pane">
+        {% set max_val = tackles_leaders[0].val if tackles_leaders else 1 %}
+        <table>
+            <thead>
+                <tr><th>Rank</th><th>Player</th><th>Club</th><th>Tackles</th></tr>
+            </thead>
+            <tbody>
+                {% for p in tackles_leaders %}
+                <tr class="player-row">
+                    <td class="leader-rank{% if loop.index==1 %} leader-rank-first{% endif %}">
+                        {% if loop.index == 1 %}🥇{% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td class="player-name-cell">{{ p.player_name }}</td>
+                    <td class="player-club-cell">{{ p.team_name or "–" }}</td>
+                    <td>
+                        <div class="leader-bar-row">
+                            <div class="leader-bar-track">
+                                <div class="leader-bar-fill" style="--leader-width:{{ (p.val / max_val * 100)|round }}%"></div>
+                            </div>
+                            <span class="leader-value">{{ p.val }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-table-cell">No data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var _cd = document.getElementById("chart-data").dataset;
+    var goalsLabels = JSON.parse(_cd.goalsLabels);
+    var goalsValues = JSON.parse(_cd.goalsValues);
+    var outcomeHome = Number(_cd.outcomeHome);
+    var outcomeDraws = Number(_cd.outcomeDraws);
+    var outcomeAway = Number(_cd.outcomeAway);
+    var discLabels = JSON.parse(_cd.discLabels);
+    var discYellow = JSON.parse(_cd.discYellow);
+    var discRed = JSON.parse(_cd.discRed);
+    var defLabels = JSON.parse(_cd.defLabels);
+    var defValues = JSON.parse(_cd.defValues);
+
+    var LABEL_COLOR = "#6f6472";
+    var GRID_COLOR = "#d8cfd9";
+
+    function axisOpts() {
+        return {
+            x: { ticks: { color: LABEL_COLOR, font: { family: "Arial", size: 11 } }, grid: { color: GRID_COLOR } },
+            y: { ticks: { color: LABEL_COLOR, font: { family: "Arial", size: 11 } }, grid: { color: GRID_COLOR } }
+        };
+    }
+
+    new Chart(document.getElementById("goalsChart"), {
+        type: "bar",
+        data: {
+            labels: goalsLabels,
+            datasets: [{ label: "Goals scored", data: goalsValues, backgroundColor: "#37003c", borderRadius: 8 }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
+            scales: axisOpts()
+        }
+    });
+
+    new Chart(document.getElementById("outcomeChart"), {
+        type: "doughnut",
+        data: {
+            labels: ["Home wins", "Draws", "Away wins"],
+            datasets: [{
+                data: [outcomeHome, outcomeDraws, outcomeAway],
+                backgroundColor: ["#22c55e", "#f59e0b", "#37003c"],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: { color: LABEL_COLOR, font: { family: "Arial" }, padding: 14 }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById("disciplineChart"), {
+        type: "bar",
+        data: {
+            labels: discLabels,
+            datasets: [
+                { label: "Yellow cards", data: discYellow, backgroundColor: "#f59e0b", borderRadius: 6 },
+                { label: "Red cards", data: discRed, backgroundColor: "#ef4444", borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
+            scales: axisOpts()
+        }
+    });
+
+    var defPairs = defLabels.map(function(l, i) { return { label: l, val: defValues[i] }; });
+    defPairs.sort(function(a, b) { return a.val - b.val; });
+
+    new Chart(document.getElementById("defenceChart"), {
+        type: "bar",
+        data: {
+            labels: defPairs.map(function(d) { return d.label; }),
+            datasets: [{
+                label: "Goals conceded",
+                data: defPairs.map(function(d) { return d.val; }),
+                backgroundColor: "#14b8a6",
+                borderRadius: 6
+            }]
+        },
+        options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: LABEL_COLOR, font: { family: "Arial" } } } },
+            scales: axisOpts()
+        }
+    });
+
+    function openTab(e, id) {
+        document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+        document.querySelectorAll(".tab-pane").forEach(function(p) { p.classList.remove("active"); });
+        e.target.classList.add("active");
+        document.getElementById(id).classList.add("active");
+        filterPlayers();
+    }
+
+    function filterStandings() {
+        var q = document.getElementById("teamSearch").value.toLowerCase();
+        document.querySelectorAll(".standings-row").forEach(function(row) {
+            var name = row.querySelector(".row-team-name").textContent.toLowerCase();
+            row.style.display = name.includes(q) ? "" : "none";
+        });
+    }
+
+    function filterPlayers() {
+        var q = document.getElementById("playerSearch").value.toLowerCase();
+        var activePane = document.querySelector(".tab-pane.active");
+        if (!activePane) return;
+
+        activePane.querySelectorAll(".player-row").forEach(function(row) {
+            var name = row.querySelector(".player-name-cell").textContent.toLowerCase();
+            var club = row.querySelector(".player-club-cell").textContent.toLowerCase();
+            row.style.display = (name.includes(q) || club.includes(q)) ? "" : "none";
+        });
+    }
+</script>
+
+{% endblock %}

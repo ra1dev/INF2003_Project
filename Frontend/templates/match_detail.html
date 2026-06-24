@@ -9,7 +9,8 @@
 </h1>
 
 <p>{{ match.match_date }}</p>
-<table>
+
+<table class="match-summary-table">
     <thead>
         <tr>
             <th>Team</th>
@@ -23,26 +24,14 @@
             <th>Red Cards</th>
         </tr>
     </thead>
-
     <tbody>
         {% for row in stats %}
         <tr>
             <td>
-
                 <div class="team-cell">
-
-                    <img src="{{ row.team_logo }}"
-                        class="team-logo">
-
-                    <a href="{{ url_for('team_detail',
-                            team_id=row.team_id) }}">
-
-                        {{ row.team_name }}
-
-                    </a>
-
+                    <img src="{{ row.team_logo }}" class="team-logo">
+                    <a href="{{ url_for('teams.team_detail', team_id=row.team_id) }}">{{ row.team_name }}</a>
                 </div>
-
             </td>
             <td>
                 {% if row.is_home %}
@@ -62,5 +51,192 @@
         {% endfor %}
     </tbody>
 </table>
+
+<h2>Match Events</h2>
+
+{% if events %}
+<div id="event-meta"
+     data-key-total="{{ key_events|length }}"
+     data-all-total="{{ events|length }}"></div>
+
+<div class="event-view-switcher">
+    <button type="button" class="event-view-btn active" data-event-mode="key" onclick="setEventView('key')">Key Moments</button>
+    <button type="button" class="event-view-btn" data-event-mode="all" onclick="setEventView('all')">All Events</button>
+</div>
+
+<div class="event-panel is-active" data-event-panel="key">
+    <h3>Key Moments</h3>
+
+    {% if key_events %}
+    <table class="match-events-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in key_events %}
+            <tr class="event-row key-event-row{% if loop.index0 >= 100 %} event-row-hidden{% endif %}">
+                <td>{{ event.timestamp }}</td>
+                <td>{{ event.type_name }}</td>
+                <td>
+                    {% if event.player_id %}
+                    <a href="{{ url_for('matches.player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
+                    {% else %}
+                    {{ event.player_name }}
+                    {% endif %}
+                </td>
+                <td>{{ event.team_name }}</td>
+                <td>
+                    <div>{{ event.description }}</div>
+                    {% if event.details %}
+                        <div class="event-details">{{ event.details }}</div>
+                    {% endif %}
+                    {% if event.location_label %}
+                        <span class="event-meta">{{ event.location_label }}</span>
+                    {% endif %}
+                    {% if event.end_location_label %}
+                        <span class="event-meta">End {{ event.end_location_label }}</span>
+                    {% endif %}
+                    {% if event.outcome %}
+                        <span class="event-meta">Outcome: {{ event.outcome }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="event-table-footer">
+        <p class="event-table-summary" id="key-events-summary">
+            Showing the first {% if key_events|length < 100 %}{{ key_events|length }}{% else %}100{% endif %} of {{ key_events|length }} key moments.
+        </p>
+        {% if key_events|length > 100 %}
+        <button type="button" id="show-more-key-btn" class="show-more-events-btn" onclick="showMoreEvents('key')">
+            Show 100 more
+        </button>
+        {% endif %}
+    </div>
+    {% else %}
+    <p class="empty-state">No key moments were detected for this match.</p>
+    {% endif %}
+</div>
+
+<div class="event-panel" data-event-panel="all">
+    <h3>All Events</h3>
+
+    <table class="match-events-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr class="event-row all-event-row{% if loop.index0 >= 100 %} event-row-hidden{% endif %}">
+                <td>{{ event.timestamp }}</td>
+                <td>{{ event.type_name }}</td>
+                <td>
+                    {% if event.player_id %}
+                    <a href="{{ url_for('matches.player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
+                    {% else %}
+                    {{ event.player_name }}
+                    {% endif %}
+                </td>
+                <td>{{ event.team_name }}</td>
+                <td>
+                    <div>{{ event.description }}</div>
+                    {% if event.details %}
+                        <div class="event-details">{{ event.details }}</div>
+                    {% endif %}
+                    {% if event.location_label %}
+                        <span class="event-meta">{{ event.location_label }}</span>
+                    {% endif %}
+                    {% if event.end_location_label %}
+                        <span class="event-meta">End {{ event.end_location_label }}</span>
+                    {% endif %}
+                    {% if event.outcome %}
+                        <span class="event-meta">Outcome: {{ event.outcome }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="event-table-footer">
+        <p class="event-table-summary" id="all-events-summary">
+            Showing the first {% if events|length < 100 %}{{ events|length }}{% else %}100{% endif %} of {{ events|length }} events.
+        </p>
+        {% if events|length > 100 %}
+        <button type="button" id="show-more-all-btn" class="show-more-events-btn" onclick="showMoreEvents('all')">
+            Show 100 more
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<p class="empty-state">No event data has been imported for this match yet.</p>
+{% endif %}
+
+<script>
+    (function () {
+        const batchSize = 100;
+        const eventMeta = document.getElementById('event-meta');
+        const totals = {
+            key: Number(eventMeta?.dataset.keyTotal || 0),
+            all: Number(eventMeta?.dataset.allTotal || 0),
+        };
+
+        const viewButtons = Array.from(document.querySelectorAll('.event-view-btn'));
+        const panels = Array.from(document.querySelectorAll('.event-panel'));
+
+        function refreshSummary(mode) {
+            const summary = document.getElementById(`${mode}-events-summary`);
+            const visibleRows = document.querySelectorAll(`.${mode}-event-row:not(.event-row-hidden)`).length;
+            const totalRows = totals[mode];
+            if (summary) {
+                summary.textContent = `Showing ${Math.min(visibleRows, totalRows)} of ${totalRows} ${mode === 'key' ? 'key moments' : 'events'}.`;
+            }
+        }
+
+        function refreshButton(mode) {
+            const button = document.getElementById(`show-more-${mode}-btn`);
+            const hiddenRows = document.querySelectorAll(`.${mode}-event-row.event-row-hidden`).length;
+            if (button && hiddenRows === 0) {
+                button.remove();
+            }
+        }
+
+        window.setEventView = function (mode) {
+            panels.forEach((panel) => {
+                panel.classList.toggle('is-active', panel.dataset.eventPanel === mode);
+            });
+
+            viewButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.eventMode === mode);
+            });
+
+            refreshSummary(mode);
+        };
+
+        window.showMoreEvents = function (mode) {
+            const hiddenRows = Array.from(document.querySelectorAll(`.${mode}-event-row.event-row-hidden`));
+            hiddenRows.slice(0, batchSize).forEach((row) => row.classList.remove('event-row-hidden'));
+            refreshSummary(mode);
+            refreshButton(mode);
+        };
+
+        window.setEventView('key');
+    })();
+</script>
 
 {% endblock %}

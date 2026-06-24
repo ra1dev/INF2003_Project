@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if not player_perf %}
+<h1>Player Performance</h1>
+<p class="empty-state">{{ error or "Player performance data is unavailable for this match." }}</p>
+<p><a href="{{ url_for('matches.match_detail', match_id=match.match_id) }}">Back to match details</a></p>
+{% else %}
+
+<h1>{{ player_perf.player_name }} - Player Performance</h1>
+{% set initial_action_batch = 40 %}
+
+<div class="player-perf-header">
+    <div class="player-perf-info">
+        <span>{{ player_perf.team_name }}</span>
+    </div>
+    <div class="player-perf-match">
+        <a href="{{ url_for('matches.match_detail', match_id=match.match_id) }}">
+            {{ match.home_team }} vs {{ match.away_team }}
+        </a>
+        <span>{{ match.match_date }}</span>
+    </div>
+</div>
+
+<div class="player-perf-stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Touches</span>
+        <strong>{{ player_perf.statistics.touches }}</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Passes</span>
+        <strong>{{ player_perf.statistics.passes }}</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Pass Accuracy</span>
+        <strong>{{ player_perf.statistics.pass_accuracy_pct }}%</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Shots</span>
+        <strong>{{ player_perf.statistics.shots }}</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Shots on Target</span>
+        <strong>{{ player_perf.statistics.shots_on_target }}</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">xG</span>
+        <strong>{{ player_perf.statistics.xg }}</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Tackles</span>
+        <strong>{{ player_perf.statistics.tackles }}</strong>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Fouls</span>
+        <strong>{{ player_perf.statistics.fouls }}</strong>
+    </div>
+</div>
+
+<div class="player-perf-layout">
+    <section class="player-perf-panel">
+        <h2>Heatmap</h2>
+        <div class="heatmap-container">
+            <svg class="heatmap-svg" viewBox="0 0 120 80" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <linearGradient id="heatmapGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+                        <stop offset="50%" stop-color="#37003c" stop-opacity="1" />
+                        <stop offset="100%" stop-color="#dc2626" stop-opacity="1" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- Pitch outline -->
+                <rect x="0" y="0" width="120" height="80" fill="none" stroke="#d8cfd9" stroke-width="0.5"/>
+                
+                <!-- Center line -->
+                <line x1="60" y1="0" x2="60" y2="80" stroke="#d8cfd9" stroke-width="0.3"/>
+                
+                <!-- Heatmap grid -->
+                {% if player_perf.heatmap %}
+                    {% set ns = namespace(max_touches=0) %}
+                    {% for row in player_perf.heatmap %}
+                        {% for cell in row %}
+                            {% if cell > ns.max_touches %}
+                                {% set ns.max_touches = cell %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    
+                    {% for row in player_perf.heatmap %}
+                        {% set y = loop.index0 %}
+                        {% for touches in row %}
+                            {% set x = loop.index0 %}
+                            {% if touches > 0 %}
+                                {% set cell_width = 120 / 20 %}
+                                {% set cell_height = 80 / 20 %}
+                                {% set intensity = (touches / ns.max_touches * 100) if ns.max_touches > 0 else 0 %}
+                                {% set rect_x = x * cell_width %}
+                                {% set rect_y = y * cell_height %}
+                                
+                                <rect x="{{ rect_x }}" y="{{ rect_y }}" width="{{ cell_width }}" height="{{ cell_height }}" 
+                                      fill="url(#heatmapGradient)" 
+                                      opacity="{{ intensity / 100 }}"
+                                      stroke="#f1edf3" stroke-width="0.1"/>
+                                
+                                {% if touches > 2 %}
+                                <text x="{{ rect_x + cell_width / 2 }}" y="{{ rect_y + cell_height / 2 }}" 
+                                      font-size="2" fill="#17001b" text-anchor="middle" alignment-baseline="middle">
+                                    {{ touches }}
+                                </text>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+            </svg>
+        </div>
+        <p class="heatmap-note">Event/touch locations across the pitch. Higher numbers and stronger shading mean more involvement in that area.</p>
+    </section>
+
+    <section class="player-perf-panel">
+        <h2>Passing Network</h2>
+        {% if player_perf.passing_network %}
+        <div class="passing-network-list">
+            {% for recipient in player_perf.passing_network %}
+            <div class="passing-connection">
+                <div class="recipient-name">{{ recipient.recipient }}</div>
+                <div class="pass-bar">
+                    <progress class="pass-progress" value="{{ recipient.successful }}" max="{{ recipient.passes if recipient.passes > 0 else 1 }}"></progress>
+                    <span class="pass-progress-label">{{ recipient.successful }}/{{ recipient.passes }}</span>
+                </div>
+                <div class="accuracy">{{ recipient.accuracy_pct }}% accuracy</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No passing data available.</p>
+        {% endif %}
+    </section>
+</div>
+
+<section class="player-perf-panel period-breakdown-section">
+    <h2>Period Breakdown</h2>
+    {% if player_perf.period_breakdown %}
+    <table class="player-perf-table">
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Touches</th>
+                <th>Passes</th>
+                <th>Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for period, data in player_perf.period_breakdown.items() %}
+            <tr>
+                <td>{{ period if period != 'unknown' else 'Unknown' }}</td>
+                <td>{{ data.touches }}</td>
+                <td>{{ data.passes }}</td>
+                <td>{{ data.passes_completed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No period data available.</p>
+    {% endif %}
+</section>
+
+<section class="player-perf-panel action-timeline-section">
+    <h2>Action Timeline</h2>
+    {% if player_perf.actions %}
+    <div class="action-timeline">
+        {% for action in player_perf.actions %}
+        <div class="action-item timeline-action-row{% if loop.index0 >= initial_action_batch %} action-row-hidden{% endif %}">
+            <span class="action-time">{{ action.timestamp }}</span>
+            <div class="action-main">
+                <span class="action-type">{{ action.type or 'Event' }}</span>
+                <div class="action-badges">
+                    {% if action.outcome %}
+                        <span class="action-outcome">{{ action.outcome }}</span>
+                    {% endif %}
+                    {% if action.xg %}
+                        <span class="action-xg">xG {{ action.xg }}</span>
+                    {% endif %}
+                    {% if action.length %}
+                        <span class="action-detail">{{ action.length }}m</span>
+                    {% endif %}
+                    {% if action.recipient %}
+                        <span class="action-detail">to {{ action.recipient }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="action-timeline-footer">
+        <p class="timeline-note" id="action-timeline-summary">
+            Showing the first {% if player_perf.actions|length < initial_action_batch %}{{ player_perf.actions|length }}{% else %}{{ initial_action_batch }}{% endif %} of {{ player_perf.actions|length }} actions.
+        </p>
+        {% if player_perf.actions|length > initial_action_batch %}
+        <button type="button" id="show-more-actions-btn" class="show-more-events-btn" onclick="showMoreActions()">
+            Show {{ initial_action_batch }} more
+        </button>
+        {% endif %}
+    </div>
+    {% else %}
+    <p class="empty-state">No action data available.</p>
+    {% endif %}
+</section>
+
+{% if player_perf.actions %}
+<script>
+    (function () {
+        const batchSize = {{ initial_action_batch }};
+        const totalRows = {{ player_perf.actions|length }};
+
+        function refreshActionSummary() {
+            const summary = document.getElementById('action-timeline-summary');
+            if (!summary) {
+                return;
+            }
+
+            const visibleRows = document.querySelectorAll('.timeline-action-row:not(.action-row-hidden)').length;
+            summary.textContent = `Showing ${Math.min(visibleRows, totalRows)} of ${totalRows} actions.`;
+        }
+
+        function refreshActionButton() {
+            const button = document.getElementById('show-more-actions-btn');
+            if (!button) {
+                return;
+            }
+
+            const hiddenRows = document.querySelectorAll('.timeline-action-row.action-row-hidden').length;
+            if (hiddenRows === 0) {
+                button.remove();
+                return;
+            }
+
+            const nextBatch = Math.min(batchSize, hiddenRows);
+            button.textContent = `Show ${nextBatch} more`;
+        }
+
+        window.showMoreActions = function () {
+            const hiddenRows = Array.from(document.querySelectorAll('.timeline-action-row.action-row-hidden'));
+            const rowsToReveal = hiddenRows.slice(0, batchSize);
+            rowsToReveal.forEach((row, index) => {
+                row.classList.remove('action-row-hidden');
+                row.classList.add('action-row-reveal');
+                row.style.animationDelay = `${Math.min(index * 18, 180)}ms`;
+            });
+
+            if (rowsToReveal.length > 0) {
+                rowsToReveal[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            window.setTimeout(() => {
+                rowsToReveal.forEach((row) => {
+                    row.classList.remove('action-row-reveal');
+                    row.style.animationDelay = '';
+                });
+            }, 520);
+
+            refreshActionSummary();
+            refreshActionButton();
+        };
+
+        refreshActionSummary();
+        refreshActionButton();
+    })();
+</script>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

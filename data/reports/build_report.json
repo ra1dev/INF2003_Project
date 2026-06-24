@@ -1,0 +1,45 @@
+{
+  "warnings": [],
+  "staging_counts": {
+    "staging_match_raw": 9380,
+    "staging_player_stats_raw": 8206,
+    "staging_player_club_raw": 25248
+  },
+  "final_counts": {
+    "season": 7,
+    "team": 31,
+    "position": 4,
+    "player": 2356,
+    "match_record": 2660,
+    "match_team_stats": 5320,
+    "player_season_stats": 5853,
+    "player_team_season": 6378
+  },
+  "skipped_player_club_rows": {
+    "player_not_in_stats_dataset": 261,
+    "duplicate_membership": 2,
+    "club_not_in_match_dataset": 2,
+    "season_out_of_scope": 18605
+  },
+  "duplicate_player_stat_rows_removed": 0,
+  "rejected_player_stat_rows": 4,
+  "manual_match_stat_corrections": 1,
+  "dropped_unmapped_player_stat_rows": 241,
+  "target_seasons": [
+    "2015/16",
+    "2016/17",
+    "2017/18",
+    "2018/19",
+    "2019/20",
+    "2020/21",
+    "2021/22"
+  ],
+  "source_limitation": "Final relational scope is limited to 2015/16 through 2021/22 because teammate_dump/pl_player.csv does not provide club memberships after 2021/22.",
+  "validation": {
+    "matches_without_two_team_rows": 0,
+    "duplicate_player_season_rows": 0,
+    "transferred_player_seasons": 241,
+    "data_quality_team_stats_shots_on_target_gt_shots": 0,
+    "data_quality_player_appearances_gt_38": 0
+  }
+}

@@ -37,7 +37,8 @@
         <tr>
             <th>Player ID</th>
             <th>Player Name</th>
-            <th>Team</th>
+            <th>Current Club</th>
+            <th>Previous Clubs</th>
         </tr>
     </thead>
 
@@ -46,7 +47,7 @@
         {% for player in players %}
 
     <tr class="clickable-row"
-        data-href="{{ url_for('player_detail', player_id=player.player_id) }}">
+        data-href="{{ url_for('players.player_detail', player_id=player.player_id) }}">
 
         <td>{{ player.player_id }}</td>
 
@@ -54,10 +55,12 @@
 
         <td>
             <div class="match-team-cell">
-                <img src="{{ player.team_logo }}" class="mini-logo">
-                <span>{{ player.team_name }}</span>
+                <img src="{{ player.current_team_logo }}" class="mini-logo">
+                <span>{{ player.current_team_name }}</span>
             </div>
         </td>
+
+        <td class="previous-clubs-cell">{{ player.previous_team_names }}</td>
 
     </tr>
 
