@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading-row">
+    <div>
+        <h1>{{ "Edit Match Report" if note else "New Match Report" }}</h1>
+        <p class="page-subtitle">{{ "Update the title or content of this relational record." if note else "Create a note linked by foreign key to an existing EPL match." }}</p>
+    </div>
+    {% if return_match_id %}
+        <a class="reset-btn" href="{{ url_for('matches.match_detail', match_id=return_match_id) }}#match-notes">Back to Match</a>
+    {% else %}
+        <a class="reset-btn" href="{{ url_for('admin.match_notes') }}">Back to Notes</a>
+    {% endif %}
+</div>
+
+<form method="POST" class="admin-form-card">
+    <div class="admin-field">
+        <label for="match_id">Match</label>
+        {% if note %}
+            <input type="hidden" name="match_id" value="{{ note.match_id }}">
+            <div class="admin-readonly-value">
+                #{{ note.match_id }} — {{ note.home_team }} vs {{ note.away_team }} ({{ note.match_date }})
+            </div>
+        {% else %}
+            <select id="match_id" name="match_id" required>
+                <option value="">Select a match</option>
+                {% for match in matches %}
+                    <option value="{{ match.match_id }}" {% if request.form.get('match_id')|int == match.match_id %}selected{% endif %}>
+                        #{{ match.match_id }} — {{ match.match_date }} — {{ match.home_team }} vs {{ match.away_team }}
+                    </option>
+                {% endfor %}
+            </select>
+        {% endif %}
+    </div>
+
+    <div class="admin-field">
+        <label for="note_title">Report Title</label>
+        <input id="note_title" name="note_title" type="text" maxlength="150" required value="{{ request.form.get('note_title', note.note_title if note else '') }}">
+    </div>
+
+    <div class="admin-field">
+        <label for="note_content">Report Content</label>
+        <textarea id="note_content" name="note_content" rows="7" required>{{ request.form.get('note_content', note.note_content if note else '') }}</textarea>
+    </div>
+
+    <div class="admin-form-actions">
+        <button type="submit">{{ "Update Report" if note else "Create Report" }}</button>
+        {% if return_match_id %}
+            <a class="reset-btn" href="{{ url_for('matches.match_detail', match_id=return_match_id) }}#match-notes">Cancel</a>
+        {% else %}
+            <a class="reset-btn" href="{{ url_for('admin.match_notes') }}">Cancel</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

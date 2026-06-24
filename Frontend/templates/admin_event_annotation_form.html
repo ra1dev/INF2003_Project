@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading-row">
+    <div>
+        <h1>{{ "Edit Event Annotation" if item else "New Event Annotation" }}</h1>
+        <p class="page-subtitle">{{ "Update selected fields using MongoDB $set." if item else "Insert a document into match_event_annotations." }}</p>
+    </div>
+    {% if return_match_id %}
+        <a class="reset-btn" href="{{ url_for('matches.match_detail', match_id=return_match_id) }}#event-annotations">Back to Match</a>
+    {% else %}
+        <a class="reset-btn" href="{{ url_for('admin.event_annotations') }}">Back to Annotations</a>
+    {% endif %}
+</div>
+
+<form method="POST" class="admin-form-card">
+    <div class="annotation-source-card">
+        <span>Verified StatsBomb Event</span>
+        <h2>{{ item.event_minute }}′ · {{ item.event_type }}</h2>
+        <p>
+            {% if item.player %}{{ item.player }}{% endif %}
+            {% if item.player and item.team %} · {% endif %}
+            {% if item.team %}{{ item.team }}{% endif %}
+        </p>
+        <code>{{ item.event_id or 'Legacy annotation without event UUID' }}</code>
+    </div>
+
+    <div class="admin-field">
+        <label for="annotation">Annotation</label>
+        <textarea id="annotation" name="annotation" rows="7" required>{{ request.form.get('annotation', item.annotation if item else '') }}</textarea>
+    </div>
+
+    <div class="admin-field">
+        <label for="tags">Tags <span class="admin-muted">(comma separated)</span></label>
+        <input id="tags" name="tags" type="text" value="{{ request.form.get('tags', item.tags|join(', ') if item and item.tags else '') }}" placeholder="chance, tactical, turning-point">
+    </div>
+
+    <div class="admin-form-actions">
+        <button type="submit">{{ "Update Annotation" if item else "Create Annotation" }}</button>
+        {% if return_match_id %}
+            <a class="reset-btn" href="{{ url_for('matches.match_detail', match_id=return_match_id) }}#event-annotations">Cancel</a>
+        {% else %}
+            <a class="reset-btn" href="{{ url_for('admin.event_annotations') }}">Cancel</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

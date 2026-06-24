@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="relational-page-header">
+    <div>
+        <span class="database-label database-label-sql">PostgreSQL · Relational</span>
+        <h1>Match Reports</h1>
+        <p>Structured match-level analysis joined to fixtures through a foreign key.</p>
+    </div>
+    <div class="relational-model-chip">
+        <strong>match_note</strong>
+        <span>many reports → one match</span>
+    </div>
+</div>
+
+{% if error_message %}
+    <div class="flash-message flash-error">{{ error_message }}</div>
+{% else %}
+<form method="GET" class="admin-filter-form relational-filter-form">
+    <div class="admin-field">
+        <label for="season">Season</label>
+        <select id="season" name="season" required>
+            {% for season in seasons %}
+                <option value="{{ season.season_name }}" {% if selected_season == season.season_name %}selected{% endif %}>{{ season.season_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="admin-field">
+        <label for="team_id">Participating Team</label>
+        <select id="team_id" name="team_id">
+            <option value="">All teams</option>
+            {% for team in teams %}
+                <option value="{{ team.team_id }}" {% if selected_team_id == team.team_id %}selected{% endif %}>{{ team.team_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit">Apply Filters</button>
+    <a class="reset-btn" href="{{ url_for('admin.match_notes') }}">Reset</a>
+</form>
+
+<section class="relational-section">
+    <div class="admin-section-heading">
+        <div>
+            <span class="section-kicker">Fixture relation</span>
+            <h2>Select a Match</h2>
+            <p>Open a fixture to create a report with its match ID supplied automatically.</p>
+        </div>
+        <span class="record-count">{{ matches|length }} matches</span>
+    </div>
+
+    {% if matches %}
+    <div class="table-responsive relational-table-wrap">
+        <table class="admin-table relational-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Home</th>
+                    <th>Score</th>
+                    <th>Away</th>
+                    <th>Reports</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fixture in matches %}
+                <tr>
+                    <td>{{ fixture.match_date }}</td>
+                    <td><strong>{{ fixture.home_team }}</strong></td>
+                    <td><span class="relational-score">{{ fixture.full_time_home_goals }}–{{ fixture.full_time_away_goals }}</span></td>
+                    <td><strong>{{ fixture.away_team }}</strong></td>
+                    <td>{{ fixture.note_count }}</td>
+                    <td><a class="table-action-link" href="{{ url_for('matches.match_detail', match_id=fixture.match_id) }}#match-notes">Open report</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="empty-state">No matches were found for these filters.</p>
+    {% endif %}
+</section>
+
+<section class="relational-section">
+    <div class="admin-section-heading">
+        <div>
+            <span class="section-kicker">Joined records</span>
+            <h2>Saved Reports</h2>
+            <p>Rows from <code>match_note</code> joined with match and team information.</p>
+        </div>
+        <span class="record-count">{{ notes|length }} reports</span>
+    </div>
+
+    {% if notes %}
+        <div class="table-responsive relational-table-wrap">
+            <table class="admin-table relational-table">
+                <thead>
+                    <tr>
+                        <th>Report</th>
+                        <th>Fixture</th>
+                        <th>Content</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for note in notes %}
+                    <tr>
+                        <td><strong>{{ note.note_title }}</strong><div class="admin-muted">Record #{{ note.note_id }}</div></td>
+                        <td>
+                            <a href="{{ url_for('matches.match_detail', match_id=note.match_id) }}#match-notes">{{ note.home_team }} vs {{ note.away_team }}</a>
+                            <div class="admin-muted">{{ note.match_date }}</div>
+                        </td>
+                        <td class="admin-content-cell">{{ note.note_content }}</td>
+                        <td>{{ note.updated_at.strftime('%Y-%m-%d %H:%M') if note.updated_at else '-' }}</td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="reset-btn" href="{{ url_for('admin.edit_match_note', note_id=note.note_id) }}">Edit</a>
+                                <form method="POST" action="{{ url_for('admin.remove_match_note', note_id=note.note_id) }}" onsubmit="return confirm('Delete this match report?');">
+                                    <button class="admin-danger-btn" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="empty-state">No reports exist for the selected fixtures.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

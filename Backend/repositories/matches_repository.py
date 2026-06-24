@@ -1,4 +1,5 @@
 from flask import render_template, request
+from psycopg2 import Error as PostgresError
 from psycopg2.extras import RealDictCursor
 
 from Backend.db_conn import get_db
@@ -108,7 +109,11 @@ def format_statsbomb_event(event):
         outcome = (event["pass"].get("outcome") or {}).get("name")
 
     return {
+        "event_id": event.get("id"),
+        "event_index": event.get("index"),
         "timestamp": timestamp or "--:--",
+        "minute": minute,
+        "second": second,
         "period": period,
         "type_name": event_type.get("name") or "Event",
         "player_id": player.get("id"),
@@ -300,6 +305,16 @@ def match_detail(match_id):
     stats = cur.fetchall()
     cur.close()
 
+    match_notes = []
+    match_notes_error = None
+    try:
+        from Backend.repositories.admin_repository import list_match_notes
+
+        match_notes = list_match_notes(match_id=match_id)
+    except PostgresError as exc:
+        conn.rollback()
+        match_notes_error = f"Match notes are unavailable: {exc}"
+
     events = []
     key_events = []
     try:
@@ -320,11 +335,24 @@ def match_detail(match_id):
         events = []
         key_events = []
 
+    event_annotations = []
+    event_annotations_error = None
+    try:
+        from Backend.repositories.admin_repository import list_event_annotations
+
+        event_annotations = list_event_annotations(match_id=match_id)
+    except Exception as exc:
+        event_annotations_error = f"Event annotations are unavailable: {exc}"
+
     return render_template(
         "match_detail.html",
         title="Match Stats",
         stats=stats,
         match=match,
+        match_notes=match_notes,
+        match_notes_error=match_notes_error,
+        event_annotations=event_annotations,
+        event_annotations_error=event_annotations_error,
         events=events,
         key_events=key_events
     )

@@ -39,15 +39,22 @@
                 <a href="/team-comparison" {% if request.path == '/team-comparison' %}class="active" aria-current="page"{% endif %}>Team Comparison</a>
             </div>
         </div>
-        <a href="/matches" {% if request.path.startswith('/match') %}class="active" aria-current="page"{% endif %}>Matches</a>
+        <div class="nav-dropdown {% if request.path.startswith('/match') or request.path.startswith('/admin/match-notes') %}active{% endif %}">
+            <a href="/matches" class="nav-dropdown-toggle" {% if request.path.startswith('/match') or request.path.startswith('/admin/match-notes') %}aria-current="page"{% endif %}>Matches</a>
+            <div class="nav-dropdown-menu">
+                <a href="/matches" {% if request.path == '/matches' or request.path.startswith('/match/') %}class="active" aria-current="page"{% endif %}>Match List</a>
+                <a href="{{ url_for('admin.match_notes') }}" {% if request.path.startswith('/admin/match-notes') %}class="active" aria-current="page"{% endif %}>Match Reports</a>
+            </div>
+        </div>
         <a href="/predictions" {% if request.path == '/predictions' %}class="active" aria-current="page"{% endif %}>Predictions</a>
         <a href="/season-recap" {% if request.path == '/season-recap' %}class="active" aria-current="page"{% endif %}>Recap</a>
         <a href="/insights?season_id=1" {% if request.path == '/insights' %}class="active" aria-current="page"{% endif %}>Insights</a>
-        <div class="nav-dropdown {% if request.path in ['/nosql-insights', '/event-search'] %}active{% endif %}">
-            <a href="/nosql-insights" class="nav-dropdown-toggle" {% if request.path in ['/nosql-insights', '/event-search'] %}aria-current="page"{% endif %}>Events</a>
+        <div class="nav-dropdown {% if request.path in ['/nosql-insights', '/event-search'] or request.path.startswith('/admin/event-annotations') %}active{% endif %}">
+            <a href="/nosql-insights" class="nav-dropdown-toggle" {% if request.path in ['/nosql-insights', '/event-search'] or request.path.startswith('/admin/event-annotations') %}aria-current="page"{% endif %}>Events</a>
             <div class="nav-dropdown-menu">
                 <a href="/nosql-insights" {% if request.path == '/nosql-insights' %}class="active" aria-current="page"{% endif %}>Event Analytics</a>
                 <a href="/event-search" {% if request.path == '/event-search' %}class="active" aria-current="page"{% endif %}>Event Explorer</a>
+                <a href="{{ url_for('admin.event_annotations') }}" {% if request.path.startswith('/admin/event-annotations') %}class="active" aria-current="page"{% endif %}>Annotation Studio</a>
             </div>
         </div>
         <a href="/tables" {% if request.path == '/tables' %}class="active" aria-current="page"{% endif %}>Data</a>
@@ -55,6 +62,15 @@
 </nav>
 
 <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-stack" aria-live="polite">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     {% block content %}
     {% endblock %}
 </div>

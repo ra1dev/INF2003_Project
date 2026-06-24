@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mongo-studio-hero">
+    <div>
+        <span class="database-label database-label-mongo">MongoDB · Nested Documents</span>
+        <h1>Event Annotation Studio</h1>
+        <p>Select a match with imported StatsBomb data, open its event timeline, and annotate an exact event UUID.</p>
+    </div>
+    <div class="mongo-document-shape" aria-label="MongoDB annotation document shape">
+        <code>{ event_id, player, team, tags[] }</code>
+        <span>Flexible event snapshot</span>
+    </div>
+</div>
+
+{% if error_message %}
+    <div class="flash-message flash-error">{{ error_message }}</div>
+{% else %}
+<div class="mongo-studio-layout">
+    <aside class="mongo-studio-sidebar">
+        <span class="studio-step">01 · Find event data</span>
+        <h2>Choose Coverage</h2>
+        <p>Only matches with a nested <code>events[]</code> array are shown.</p>
+
+        <form method="GET" class="mongo-filter-form">
+            <div class="mongo-fixed-coverage">
+                <span>Imported event season</span>
+                <strong>{{ selected_season }}</strong>
+                <small>StatsBomb nested event coverage</small>
+            </div>
+            <div class="admin-field">
+                <label for="team_id">Team in Event Document</label>
+                <select id="team_id" name="team_id">
+                    <option value="">All covered teams</option>
+                    {% for team in teams %}
+                        <option value="{{ team.team_id }}" {% if selected_team_id == team.team_id %}selected{% endif %}>{{ team.team_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Load Event Matches</button>
+            <a class="mongo-reset-link" href="{{ url_for('admin.event_annotations') }}">Clear team filter</a>
+        </form>
+
+        <div class="mongo-studio-guide">
+            <span class="studio-step">02 · Open timeline</span>
+            <p>Choose a fixture, then click <strong>Annotate</strong> beside a pass, shot, foul, substitution, or other event.</p>
+        </div>
+    </aside>
+
+    <main class="mongo-studio-main">
+        <div class="mongo-studio-heading">
+            <div>
+                <span class="studio-step">Event-covered fixtures</span>
+                <h2>{{ selected_season }} Timeline Sources</h2>
+            </div>
+            <div class="mongo-studio-counts">
+                <strong>{{ matches|length }}</strong>
+                <span>match documents</span>
+            </div>
+        </div>
+
+        {% if matches %}
+            <div class="mongo-match-grid">
+                {% for fixture in matches %}
+                    <a class="mongo-match-card" href="{{ url_for('matches.match_detail', match_id=fixture.match_id) }}#match-events">
+                        <div class="mongo-match-card-top">
+                            <span>{{ fixture.match_date }}</span>
+                            <span class="mongo-document-dot">document</span>
+                        </div>
+                        <div class="mongo-match-fixture">
+                            <strong>{{ fixture.home_team }}</strong>
+                            <span>{{ fixture.full_time_home_goals }}–{{ fixture.full_time_away_goals }}</span>
+                            <strong>{{ fixture.away_team }}</strong>
+                        </div>
+                        <div class="mongo-match-card-bottom">
+                            <span>{{ fixture.annotation_count }} saved annotation{{ '' if fixture.annotation_count == 1 else 's' }}</span>
+                            <strong>Open event timeline →</strong>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mongo-empty-state">No imported event documents match this season and team.</p>
+        {% endif %}
+    </main>
+</div>
+
+<section class="mongo-document-section">
+    <div class="mongo-studio-heading">
+        <div>
+            <span class="studio-step">Stored documents</span>
+            <h2>Recent Event Annotations</h2>
+            <p>Each card preserves a source event UUID and flexible tags.</p>
+        </div>
+        <div class="mongo-studio-counts">
+            <strong>{{ annotations|length }}</strong>
+            <span>annotations</span>
+        </div>
+    </div>
+
+    {% if annotations %}
+        <div class="mongo-annotation-grid">
+            {% for item in annotations %}
+                <article class="mongo-annotation-card">
+                    <div class="mongo-annotation-event">
+                        <span>{{ item.event_minute }}′</span>
+                        <div>
+                            <strong>{{ item.event_type }}</strong>
+                            <p>{{ item.player or 'No player' }} · {{ item.team or 'Unknown team' }}</p>
+                        </div>
+                    </div>
+                    <p class="mongo-annotation-text">{{ item.annotation }}</p>
+                    {% if item.tags %}
+                        <div class="annotation-tags">
+                            {% for tag in item.tags %}<span>{{ tag }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
+                    <details class="mongo-document-preview">
+                        <summary>Document reference</summary>
+                        <code>event_id: {{ item.event_id or 'legacy' }}</code>
+                        <code>match_id: {{ item.match_id }}</code>
+                    </details>
+                    <div class="mongo-card-actions">
+                        <a href="{{ url_for('matches.match_detail', match_id=item.match_id) }}#event-annotations">View match</a>
+                        <a href="{{ url_for('admin.edit_event_annotation', annotation_id=item._id) }}">Edit</a>
+                        <form method="POST" action="{{ url_for('admin.remove_event_annotation', annotation_id=item._id) }}" onsubmit="return confirm('Delete this event annotation document?');">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="mongo-empty-state">No annotation documents exist for these event-covered matches yet.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

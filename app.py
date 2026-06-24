@@ -1,6 +1,9 @@
+import os
+
 from flask import Flask
 
 from Backend.db_conn import init_app
+from Backend.routes.admin import admin_bp
 from Backend.routes.home import home_bp
 from Backend.routes.insights import insights_bp
 from Backend.routes.matches import matches_bp
@@ -17,6 +20,9 @@ app = Flask(
     static_folder="Frontend/static"
 )
 
+# Flask sessions are required for CRUD success/error flash messages.
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "inf2003-development-key")
+
 init_app(app)
 
 app.register_blueprint(home_bp)
@@ -28,6 +34,7 @@ app.register_blueprint(matches_bp)
 app.register_blueprint(predictions_bp)
 app.register_blueprint(season_bp)
 app.register_blueprint(nosql_bp)
+app.register_blueprint(admin_bp)
 
 if __name__ == "__main__":
     app.run(debug=True)

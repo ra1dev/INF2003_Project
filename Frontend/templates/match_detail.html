@@ -52,7 +52,163 @@
     </tbody>
 </table>
 
-<h2>Match Events</h2>
+<section id="match-notes" class="match-notes-section relational-match-report-section">
+    <div class="match-notes-heading">
+        <div>
+            <span class="match-notes-eyebrow">PostgreSQL · Relational Report</span>
+            <h2>Match Reports</h2>
+            <p>Write match-level analysis stored as a row linked to this fixture by foreign key.</p>
+        </div>
+        <a class="reset-btn" href="{{ url_for('admin.match_notes', season=match.season_name) }}">Browse Other Matches</a>
+    </div>
+
+    {% if match_notes_error %}
+        <div class="flash-message flash-error">{{ match_notes_error }}</div>
+    {% else %}
+        <div class="match-notes-layout">
+            <form method="POST"
+                  action="{{ url_for('admin.add_match_note_to_match', match_id=match.match_id) }}"
+                  class="match-note-inline-form">
+                <h3>Add a Match Report</h3>
+                <div class="admin-field">
+                    <label for="note_title">Title</label>
+                    <input id="note_title" name="note_title" type="text" maxlength="150" required placeholder="e.g. Second-half tactical change">
+                </div>
+                <div class="admin-field">
+                    <label for="note_content">Analysis</label>
+                    <textarea id="note_content" name="note_content" rows="5" required placeholder="Write your observation about this match..."></textarea>
+                </div>
+                <button type="submit">Save Match Report</button>
+            </form>
+
+            <div class="match-note-list">
+                <div class="match-note-list-heading">
+                    <h3>Saved Reports</h3>
+                    <span>{{ match_notes|length }}</span>
+                </div>
+                {% if match_notes %}
+                    {% for note in match_notes %}
+                        <article class="match-note-card">
+                            <div class="match-note-card-heading">
+                                <div>
+                                    <h4>{{ note.note_title }}</h4>
+                                    <span>Updated {{ note.updated_at.strftime('%Y-%m-%d %H:%M') if note.updated_at else '-' }}</span>
+                                </div>
+                                <div class="admin-actions">
+                                    <a class="reset-btn" href="{{ url_for('admin.edit_match_note', note_id=note.note_id, return_to_match=match.match_id) }}">Edit</a>
+                                    <form method="POST"
+                                          action="{{ url_for('admin.remove_match_note', note_id=note.note_id) }}"
+                                          onsubmit="return confirm('Delete this match report?');">
+                                        <input type="hidden" name="return_to_match" value="{{ match.match_id }}">
+                                        <button class="admin-danger-btn" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <p>{{ note.note_content }}</p>
+                        </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No reports yet. Add the first match-level analysis.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+<section id="event-annotations" class="mongo-event-studio-panel">
+    <div class="match-notes-heading">
+        <div>
+            <span class="match-notes-eyebrow">MongoDB · Nested Event Document</span>
+            <h2>Event Annotation Studio</h2>
+            <p>Select an exact event from the timeline and enrich its UUID with commentary and flexible tags.</p>
+        </div>
+        <a class="reset-btn" href="{{ url_for('admin.event_annotations') }}">Browse Other Matches</a>
+    </div>
+
+    {% if event_annotations_error %}
+        <div class="flash-message flash-error">{{ event_annotations_error }}</div>
+    {% else %}
+        <div class="match-notes-layout">
+            <form method="POST"
+                  action="{{ url_for('admin.add_event_annotation_to_match', match_id=match.match_id) }}"
+                  class="match-note-inline-form">
+                <h3>Add an Event Annotation</h3>
+                <input id="annotation-event-id" name="event_id" type="hidden" required>
+                <div id="selected-event-card" class="selected-event-card is-empty">
+                    <strong id="selected-event-title">No event selected</strong>
+                    <span id="selected-event-context">An annotation must be linked to one real event from this match.</span>
+                    {% if events %}
+                        <button id="choose-event-button" type="button" class="choose-event-button">Choose an Event from the Timeline</button>
+                    {% else %}
+                        <span class="event-data-unavailable">No event timeline is available for this match.</span>
+                    {% endif %}
+                </div>
+                <div id="event-annotation-fields" class="event-annotation-fields is-hidden">
+                    <div class="admin-field">
+                        <label for="annotation">Annotation</label>
+                        <textarea id="annotation" name="annotation" rows="5" required disabled placeholder="Describe what happened and why it mattered..."></textarea>
+                    </div>
+                    <div class="admin-field">
+                        <label for="annotation-tags">Tags <span class="admin-muted">(comma separated)</span></label>
+                        <input id="annotation-tags" name="tags" type="text" disabled placeholder="chance, tactical, turning-point">
+                    </div>
+                    <button id="save-event-annotation" type="submit" disabled>Add Event Annotation</button>
+                </div>
+            </form>
+
+            <div class="match-note-list">
+                <div class="match-note-list-heading">
+                    <h3>Saved Annotations</h3>
+                    <span>{{ event_annotations|length }}</span>
+                </div>
+                {% if event_annotations %}
+                    {% for item in event_annotations %}
+                        <article class="match-note-card">
+                            <div class="match-note-card-heading">
+                                <div>
+                                    <h4>{{ item.event_minute }}′ · {{ item.event_type }}</h4>
+                                    <span>Updated {{ item.updated_at.strftime('%Y-%m-%d %H:%M') if item.updated_at else '-' }}</span>
+                                </div>
+                                <div class="admin-actions">
+                                    <a class="reset-btn" href="{{ url_for('admin.edit_event_annotation', annotation_id=item._id, return_to_match=match.match_id) }}">Edit</a>
+                                    <form method="POST"
+                                          action="{{ url_for('admin.remove_event_annotation', annotation_id=item._id) }}"
+                                          onsubmit="return confirm('Delete this event annotation?');">
+                                        <input type="hidden" name="return_to_match" value="{{ match.match_id }}">
+                                        <button class="admin-danger-btn" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <p>{{ item.annotation }}</p>
+                            {% if item.tags %}
+                                <div class="annotation-tags">
+                                    {% for tag in item.tags %}<span>{{ tag }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                            <details class="mongo-document-preview">
+                                <summary>Source event document</summary>
+                                <code>event_id: {{ item.event_id or 'legacy' }}</code>
+                                <code>player: {{ item.player or 'null' }}</code>
+                                <code>team: {{ item.team or 'null' }}</code>
+                            </details>
+                        </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No event annotations yet. Add the first one for this match.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+<h2 id="match-events">Match Events</h2>
+
+{% if events %}
+<div class="event-annotation-tip">
+    <strong>Want to add a MongoDB annotation?</strong>
+    Choose <span>Annotate</span> beside an event. The selected event’s UUID, player, team, type and timestamp will be attached automatically.
+</div>
+{% endif %}
 
 {% if events %}
 <div id="event-meta"
@@ -76,6 +232,7 @@
                 <th>Player</th>
                 <th>Team</th>
                 <th>Details</th>
+                <th>Annotation</th>
             </tr>
         </thead>
         <tbody>
@@ -137,6 +294,7 @@
                 <th>Player</th>
                 <th>Team</th>
                 <th>Details</th>
+                <th>Annotation</th>
             </tr>
         </thead>
         <tbody>
@@ -149,6 +307,19 @@
                     <a href="{{ url_for('matches.player_match_performance', match_id=match.match_id, player_id=event.player_id) }}">{{ event.player_name }}</a>
                     {% else %}
                     {{ event.player_name }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.event_id %}
+                    <button type="button"
+                            class="event-annotate-btn"
+                            data-event-id="{{ event.event_id }}"
+                            data-event-minute="{{ event.minute if event.minute is not none else 0 }}"
+                            data-event-type="{{ event.type_name }}"
+                            data-event-player="{{ event.player_name }}"
+                            data-event-team="{{ event.team_name }}">
+                        Annotate
+                    </button>
                     {% endif %}
                 </td>
                 <td>{{ event.team_name }}</td>
@@ -165,6 +336,19 @@
                     {% endif %}
                     {% if event.outcome %}
                         <span class="event-meta">Outcome: {{ event.outcome }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.event_id %}
+                    <button type="button"
+                            class="event-annotate-btn"
+                            data-event-id="{{ event.event_id }}"
+                            data-event-minute="{{ event.minute if event.minute is not none else 0 }}"
+                            data-event-type="{{ event.type_name }}"
+                            data-event-player="{{ event.player_name }}"
+                            data-event-team="{{ event.team_name }}">
+                        Annotate
+                    </button>
                     {% endif %}
                 </td>
             </tr>
@@ -234,6 +418,51 @@
             refreshSummary(mode);
             refreshButton(mode);
         };
+
+        const annotationSection = document.getElementById('event-annotations');
+        const eventIdInput = document.getElementById('annotation-event-id');
+        const selectedEventCard = document.getElementById('selected-event-card');
+        const selectedEventTitle = document.getElementById('selected-event-title');
+        const selectedEventContext = document.getElementById('selected-event-context');
+        const saveAnnotationButton = document.getElementById('save-event-annotation');
+        const annotationFields = document.getElementById('event-annotation-fields');
+        const annotationInput = document.getElementById('annotation');
+        const annotationTags = document.getElementById('annotation-tags');
+        const chooseEventButton = document.getElementById('choose-event-button');
+
+        chooseEventButton?.addEventListener('click', () => {
+            window.setEventView('all');
+            document.getElementById('match-events').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        document.querySelectorAll('.event-annotate-btn').forEach((button) => {
+            button.addEventListener('click', () => {
+                const eventId = button.dataset.eventId;
+                eventIdInput.value = eventId;
+                selectedEventTitle.textContent = `${button.dataset.eventMinute}′ · ${button.dataset.eventType}`;
+
+                const context = [button.dataset.player, button.dataset.team]
+                    .filter((value) => value && value !== '-')
+                    .join(' · ');
+                selectedEventContext.textContent = context || 'Match event selected';
+                selectedEventCard.classList.remove('is-empty');
+                annotationFields.classList.remove('is-hidden');
+                annotationInput.disabled = false;
+                annotationTags.disabled = false;
+                saveAnnotationButton.disabled = false;
+                if (chooseEventButton) {
+                    chooseEventButton.hidden = true;
+                }
+
+                document.querySelectorAll('.event-annotate-btn').forEach((candidate) => {
+                    candidate.classList.toggle('active', candidate.dataset.eventId === eventId);
+                    candidate.textContent = candidate.dataset.eventId === eventId ? 'Selected' : 'Annotate';
+                });
+
+                annotationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.setTimeout(() => annotationInput.focus(), 350);
+            });
+        });
 
         window.setEventView('key');
     })();
