@@ -1,3 +1,4 @@
+# PostgreSQL query helpers for the team and player insights dashboard.
 from psycopg2.extras import RealDictCursor
 
 def _run_query(conn, query, params=None):

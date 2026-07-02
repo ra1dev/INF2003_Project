@@ -1,3 +1,4 @@
+# Import StatsBomb match data into the local MongoDB database used by the NoSQL views.
 from __future__ import annotations
 
 import argparse

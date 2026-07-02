@@ -1,3 +1,4 @@
+# Route handlers for the admin CRUD and annotation workflow.
 from bson.errors import InvalidId
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from psycopg2 import Error as PostgresError

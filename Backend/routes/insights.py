@@ -1,3 +1,4 @@
+# Route handlers for the insights dashboard pages.
 from flask import Blueprint, render_template, request
 from Backend.db_conn import get_db
 from Backend.repositories.insights_repository import (

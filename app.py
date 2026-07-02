@@ -15,6 +15,7 @@ from Backend.routes.predictions import predictions_bp
 from Backend.routes.season import season_bp
 from Backend.routes.teams import teams_bp
 
+# Create the Flask application and point it at the frontend templates and static assets.
 app = Flask(
     __name__,
     template_folder="Frontend/templates",
@@ -24,8 +25,10 @@ app = Flask(
 # Flask sessions are required for CRUD success/error flash messages.
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "inf2003-development-key")
 
+# Initialise the database connection lifecycle hooks for this app instance.
 init_app(app)
 
+# Register the feature blueprints so each route module is available in the app.
 app.register_blueprint(home_bp)
 app.register_blueprint(favorites_bp)
 app.register_blueprint(insights_bp)

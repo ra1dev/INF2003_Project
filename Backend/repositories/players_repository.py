@@ -1,5 +1,6 @@
 from psycopg2.extras import RealDictCursor
 
+# Keep a stable list of player statistics so the UI can select the same fields consistently.
 PLAYER_STAT_FIELDS = [
     "appearances",
     "clean_sheets",
@@ -44,6 +45,7 @@ PLAYER_STAT_FIELDS = [
 
 
 def get_players(conn, search=None, team=None):
+    """Fetch players with optional name and club filtering for the UI search page."""
     query = """
         WITH player_clubs AS (
             SELECT
@@ -140,6 +142,7 @@ def get_players(conn, search=None, team=None):
 
 
 def get_team_options(conn):
+    """Return all team names for the player filters."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("""
             SELECT team_name
@@ -150,6 +153,7 @@ def get_team_options(conn):
 
 
 def get_player_season_stats(conn, player_id):
+    """Retrieve one player's season-by-season statistics for the detail page."""
     player_stat_columns = ",\n            ".join(
         f"pss.{field}" for field in PLAYER_STAT_FIELDS
     )

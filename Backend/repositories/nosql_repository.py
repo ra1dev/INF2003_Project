@@ -1,3 +1,4 @@
+# Helpers for rendering MongoDB event data into the NoSQL insights UI.
 import re
 from datetime import datetime
 

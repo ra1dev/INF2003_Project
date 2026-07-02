@@ -1,3 +1,4 @@
+# Repository helpers for the season recap and season table pages.
 import time
 from flask import render_template, request
 from psycopg2.extras import RealDictCursor
@@ -5,7 +6,7 @@ from psycopg2.extras import RealDictCursor
 from Backend.db_conn import get_db
 
 
-import time  # add at top of file
+import time
 
 def season_recap():
     selected_season = request.args.get("season")

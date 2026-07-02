@@ -1,3 +1,4 @@
+# Route handlers for the season recap and season table pages.
 from flask import Blueprint
 
 from Backend.repositories.season_repository import season_recap as render_season_recap

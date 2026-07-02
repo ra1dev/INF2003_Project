@@ -1,3 +1,4 @@
+# Route handlers for the landing and utility pages.
 from flask import Blueprint
 
 from Backend.repositories.home_repository import db_test as render_db_test

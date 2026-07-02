@@ -1,3 +1,4 @@
+# Route handlers for the predictions pages.
 from flask import Blueprint
 
 from Backend.repositories.predictions_repository import predictions as render_predictions

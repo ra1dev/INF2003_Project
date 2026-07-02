@@ -1,3 +1,4 @@
+# Repository helpers for the player comparison and stat-selection experience.
 from flask import render_template, request, url_for
 from psycopg2.extras import RealDictCursor
 

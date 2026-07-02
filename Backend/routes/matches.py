@@ -1,3 +1,4 @@
+# Route handlers for match listings and match detail views.
 from flask import Blueprint
 
 from Backend.repositories.matches_repository import match_detail as render_match_detail

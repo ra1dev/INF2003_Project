@@ -4,6 +4,7 @@ from psycopg2.extras import RealDictCursor
 from Backend.db_conn import get_db
 
 
+# These sections define the metric groups and labels shown on the team comparison page.
 TEAM_COMPARISON_GROUPS = [
     {
         "title": "Context",
@@ -189,6 +190,7 @@ def metric_winner(metric, team_a, team_b, neutralize_raw_totals):
 
 
 def build_team_comparison_sections(team_a, team_b, neutralize_raw_totals):
+    """Assemble the comparison rows used by the team comparison template."""
     sections = []
 
     for group in TEAM_COMPARISON_GROUPS:
@@ -278,6 +280,7 @@ def build_team_season_highlights(rows):
 
 
 def build_team_trend_data(rows, team_a, team_b):
+    """Build trend-chart data for the selected seasons and teams."""
     season_axis = []
     seen_seasons = set()
 

@@ -1,3 +1,4 @@
+# Route handlers for the player search and player stat pages.
 from flask import Blueprint, render_template, request, url_for
 
 from Backend.db_conn import get_db

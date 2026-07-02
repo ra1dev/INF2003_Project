@@ -1,3 +1,4 @@
+# Repository helpers for the predictions listing and filtering view.
 from flask import render_template, request
 from psycopg2.extras import RealDictCursor
 

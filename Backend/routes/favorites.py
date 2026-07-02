@@ -1,3 +1,4 @@
+# Route handlers for the favorites pages and favorite CRUD actions.
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from psycopg2 import Error as PostgresError
 

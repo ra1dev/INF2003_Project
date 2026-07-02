@@ -1,3 +1,4 @@
+# Route handlers for team listings, detail views, and comparisons.
 from flask import Blueprint
 
 from Backend.repositories.teams_repository import team_comparison as render_team_comparison

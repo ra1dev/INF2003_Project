@@ -1,3 +1,4 @@
+# Route handlers for the MongoDB-backed insights views.
 from flask import Blueprint
 
 from Backend.repositories.nosql_repository import event_search as render_event_search

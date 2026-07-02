@@ -1,3 +1,4 @@
+# Simple load-test script that hits the season recap page repeatedly.
 import urllib.request
 import time
 

@@ -1,3 +1,4 @@
+# Build and clean the relational dataset used by the Flask application.
 from __future__ import annotations
 
 import csv

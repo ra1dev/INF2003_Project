@@ -1,3 +1,4 @@
+# PostgreSQL helpers for reading and updating favorite players and teams.
 from psycopg2.extras import RealDictCursor
 
 from Backend.db_conn import get_db

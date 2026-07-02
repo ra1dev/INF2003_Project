@@ -1,3 +1,4 @@
+# Repository helpers for match listings, detail pages, and event formatting.
 from flask import render_template, request
 from psycopg2 import Error as PostgresError
 from psycopg2.extras import RealDictCursor
