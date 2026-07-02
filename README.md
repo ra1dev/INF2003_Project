@@ -1,45 +1,55 @@
-# INF2003_Project
-steps to setup flask:
-1. clone git
-2. in working directory, python -m venv venv
-3. .\venv\Scripts\activate
-4. pip install flask
-5. pip install psycopg2
-6. pip install pymongo
-7. pip install python-dotenv
-8. change password in db_conn.py
+# INF2003 Project
 
-## Database CRUD setup
+This project is a simple Flask web app for exploring football data. It lets users browse players, teams, matches, season summaries, and predictions in a clean web interface.
 
-The admin pages demonstrate full CRUD in both databases:
+## What the app does
 
-- PostgreSQL Match Reports: `http://localhost:5000/admin/match-notes`
-- MongoDB Event Annotation Studio: `http://localhost:5000/admin/event-annotations`
+- Show player and team information
+- Display match details and season recap pages
+- Compare players and teams
+- Support basic admin features for match notes and event annotations
+- Use PostgreSQL for relational data and MongoDB for event-based data
 
-Install the MongoDB dependencies in the active virtual environment:
+## Quick start
+
+1. Clone the repository.
+2. Create and activate a virtual environment:
 
 ```powershell
-pip install pymongo python-dotenv
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-Create the PostgreSQL table from the project root:
+3. Install the required packages:
 
 ```powershell
-psql -U postgres -d EPL_DB -f sql/admin_crud.sql
+pip install flask psycopg2 pymongo python-dotenv
 ```
 
-The application creates the MongoDB annotation indexes idempotently when the
-collection is first used. They can also be created manually in `mongosh`:
+4. Make sure your databases are available:
+- PostgreSQL should be running, and the app expects a database named `epl_db_2`
+- MongoDB should be running locally on `localhost:27017`
 
-```javascript
-use("epl-db")
-db.match_event_annotations.createIndex({ match_id: 1 })
-db.match_event_annotations.createIndex({ match_id: 1, event_minute: 1 })
-```
+5. Update the database connection details in [Backend/db_conn.py](Backend/db_conn.py) if needed.
 
-Set a private Flask session key before running the application outside local
-development:
+6. Start the app:
 
 ```powershell
-$env:FLASK_SECRET_KEY = "replace-with-a-long-random-value"
+python app.py
 ```
+
+Then open: http://localhost:5000
+
+## Project layout
+
+- [app.py](app.py) – starts the Flask app
+- [Backend/](Backend/) – routes, repositories, and database connections
+- [Frontend/](Frontend/) – HTML templates and styles
+- [data/](data/) – sample data used by the app
+- [sql/](sql/) – SQL setup scripts
+
+## Notes
+
+- The app can run locally for testing without extra setup, but your database credentials may need to be adjusted.
+- For the admin pages, the SQL scripts in [sql/](sql/) can be used to create the needed database tables.
+
